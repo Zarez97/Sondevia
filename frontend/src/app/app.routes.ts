@@ -10,12 +10,11 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     loadComponent: () => import('./modules/dashboard/dashboard.component').then(m => m.DashboardComponent),
-    canActivate: [authGuard]
-  },
-  {
-    path: 'dashboard/usuarios',
-    loadComponent: () => import('./modules/usuarios/usuarios.component').then(m => m.UsuariosComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard],
+    children: [
+      { path: '', loadComponent: () => import('./modules/dashboard/home.component').then(m => m.HomeComponent) },
+      { path: 'usuarios', loadComponent: () => import('./modules/usuarios/usuarios.component').then(m => m.UsuariosComponent) },
+    ]
   },
   { path: '**', redirectTo: 'login' }
 ];

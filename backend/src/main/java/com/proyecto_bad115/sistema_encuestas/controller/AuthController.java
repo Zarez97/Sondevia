@@ -2,6 +2,7 @@ package com.proyecto_bad115.sistema_encuestas.controller;
 
 import com.proyecto_bad115.sistema_encuestas.dto.LoginRequestDTO;
 import com.proyecto_bad115.sistema_encuestas.dto.LoginResponseDTO;
+import com.proyecto_bad115.sistema_encuestas.dto.MenuItemDTO;
 import com.proyecto_bad115.sistema_encuestas.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -11,6 +12,8 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -38,5 +41,10 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("mensaje", e.getMessage()));
         }
+    }
+
+    @GetMapping("/menu")
+    public ResponseEntity<List<MenuItemDTO>> menu(Principal principal) {
+        return ResponseEntity.ok(authService.obtenerMenu(principal.getName()));
     }
 }

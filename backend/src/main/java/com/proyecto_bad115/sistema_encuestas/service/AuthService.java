@@ -2,13 +2,15 @@ package com.proyecto_bad115.sistema_encuestas.service;
 
 import com.proyecto_bad115.sistema_encuestas.dto.LoginRequestDTO;
 import com.proyecto_bad115.sistema_encuestas.dto.LoginResponseDTO;
+import com.proyecto_bad115.sistema_encuestas.dto.MenuItemDTO;
 import com.proyecto_bad115.sistema_encuestas.model.EstadoUsuario;
 import com.proyecto_bad115.sistema_encuestas.model.Usuario;
+import com.proyecto_bad115.sistema_encuestas.repository.RolPrivilegioRepository;
 import com.proyecto_bad115.sistema_encuestas.repository.UsuarioRepository;
 import com.proyecto_bad115.sistema_encuestas.repository.UsuarioRolRepository;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -21,15 +23,18 @@ public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
     private final UsuarioRolRepository usuarioRolRepository;
+    private final RolPrivilegioRepository rolPrivilegioRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
 
     public AuthService(UsuarioRepository usuarioRepository,
                        UsuarioRolRepository usuarioRolRepository,
+                       RolPrivilegioRepository rolPrivilegioRepository,
                        JwtService jwtService,
                        PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.usuarioRolRepository = usuarioRolRepository;
+        this.rolPrivilegioRepository = rolPrivilegioRepository;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
     }
@@ -71,5 +76,12 @@ public class AuthService {
 
         String token = jwtService.generateToken(usuario.getEmailUser());
         return new LoginResponseDTO(token, usuario.getNombreUser(), usuario.getEmailUser(), roles);
+    }
+
+    public List<MenuItemDTO> obtenerMenu(String email) {
+        return rolPrivilegioRepository.findPrivilegiosByUsuarioEmail(email)
+                .stream()
+                .map(p -> new MenuItemDTO(p.getNombrePrivilegio(), p.getUrlPrivilegio()))
+                .toList();
     }
 }

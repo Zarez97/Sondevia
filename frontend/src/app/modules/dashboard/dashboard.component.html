@@ -1,0 +1,54 @@
+<div class="layout" [class.colapsado]="sidebarColapsado">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      @if (!sidebarColapsado) {
+        <img src="assets/images/logo_sondevia_sidebar.png" alt="Sondevia" class="logo-img" />
+      } @else {
+        <img src="assets/images/logo_sondevia_sidebar.png" alt="Sondevia" class="logo-img-sm" />
+      }
+      <button class="btn-toggle" (click)="toggleSidebar()" [title]="sidebarColapsado ? 'Expandir' : 'Colapsar'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path [attr.d]="sidebarColapsado ? 'M9 18l6-6-6-6' : 'M15 18l-6-6 6-6'" />
+        </svg>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      @for (item of menuItems; track item.url) {
+        <a [routerLink]="item.url" routerLinkActive="active" class="nav-item" [title]="item.nombre">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="nav-icon">
+            <path [attr.d]="getIcono(item.nombre)" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          @if (!sidebarColapsado) {
+            <span>{{ item.nombre }}</span>
+          }
+        </a>
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info" [title]="user?.email ?? ''">
+        <div class="avatar">{{ user?.nombre?.charAt(0) | uppercase }}</div>
+        @if (!sidebarColapsado) {
+          <div class="user-details">
+            <span class="user-name">{{ user?.nombre }}</span>
+            <span class="user-email">{{ user?.email }}</span>
+          </div>
+        }
+      </div>
+      <button class="btn-logout" (click)="logout()" title="Cerrar sesión">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Contenido -->
+  <main class="content">
+    <router-outlet />
+  </main>
+
+</div>
