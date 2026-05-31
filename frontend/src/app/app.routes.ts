@@ -14,6 +14,8 @@ export const routes: Routes = [
     children: [
       { path: '', loadComponent: () => import('./modules/dashboard/home.component').then(m => m.HomeComponent) },
       { path: 'usuarios', loadComponent: () => import('./modules/usuarios/usuarios.component').then(m => m.UsuariosComponent) },
+      { path: 'roles', loadComponent: () => import('./modules/roles/roles.component').then(m => m.RolesComponent) },
+      { path: 'privilegios', loadComponent: () => import('./modules/privilegios/privilegios.component').then(m => m.PrivilegiosComponent) },
     ]
   },
   { path: '**', redirectTo: 'login' }
