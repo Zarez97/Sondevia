@@ -1,0 +1,152 @@
+<div class="page">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="volver()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
+        Encuestas
+      </button>
+      @if (encuesta) {
+        <div class="header-info">
+          <h1 class="page-title">{{ encuesta.tituloEncuesta }}</h1>
+          <p class="page-subtitle">
+            {{ preguntas.length }} pregunta{{ preguntas.length !== 1 ? 's' : '' }} ·
+            <span class="estado-badge estado-{{ encuesta.estadoEncuesta }}">{{ encuesta.estadoNombre }}</span>
+          </p>
+        </div>
+      }
+    </div>
+    @if (enDiseno) {
+      <button class="btn-primary" (click)="abrirAgregar()">+ Agregar pregunta</button>
+    }
+  </div>
+
+  @if (error) { <div class="alert-error">{{ error }}</div> }
+
+  <!-- Lista de preguntas -->
+  @if (cargando) {
+    <div class="empty-state">Cargando preguntas...</div>
+  } @else if (preguntas.length === 0) {
+    <div class="empty-state">
+      <p>Esta encuesta no tiene preguntas.</p>
+      @if (enDiseno) { <p>Haz clic en <strong>+ Agregar pregunta</strong> para comenzar.</p> }
+    </div>
+  } @else {
+    <div class="preguntas-list">
+      @for (p of preguntas; track p.idPregunta; let i = $index) {
+        <div class="pregunta-card">
+          <div class="pregunta-numero">{{ i + 1 }}</div>
+          <div class="pregunta-body">
+            <div class="pregunta-header">
+              <span class="tipo-badge">Abierta</span>
+              @if (p.obligatoriaPregunta) {
+                <span class="obligatoria-badge">Obligatoria</span>
+              }
+            </div>
+            <p class="pregunta-texto">{{ p.descripcionPregunta }}</p>
+            <div class="pregunta-preview">
+              <input type="text" placeholder="Respuesta corta del encuestado..." disabled class="preview-input" />
+            </div>
+          </div>
+          @if (enDiseno) {
+            <div class="pregunta-actions">
+              <button class="btn-icon btn-edit" (click)="abrirEditar(p)" title="Editar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button class="btn-icon btn-delete" (click)="eliminar(p)" title="Eliminar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  <path d="M10 11v6M14 11v6"/>
+                </svg>
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Modal -->
+@if (mostrarModal) {
+  <div class="modal-overlay" (click)="cerrarModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editando ? 'Editar pregunta' : 'Nueva pregunta abierta' }}</h2>
+        <button class="btn-close" (click)="cerrarModal()">✕</button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="guardar()" class="modal-body">
+        @if (errorModal) { <div class="alert-error">{{ errorModal }}</div> }
+
+        <!-- Tipo de texto (solo en creación) -->
+        @if (!editando) {
+          <div class="form-group">
+            <label>Tipo de respuesta</label>
+            <div class="tipo-selector">
+              <button type="button" class="tipo-btn" [class.active]="tipoTextoSeleccionado === 'corta'"
+                (click)="seleccionarTipoTexto('corta')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="15" y2="6"/>
+                </svg>
+                Texto corto
+              </button>
+              <button type="button" class="tipo-btn" [class.active]="tipoTextoSeleccionado === 'larga'"
+                (click)="seleccionarTipoTexto('larga')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>
+                  <line x1="3" y1="18" x2="15" y2="18"/>
+                </svg>
+                Texto largo
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Enunciado -->
+        <div class="form-group">
+          <label>Enunciado de la pregunta <span class="required">*</span></label>
+          <textarea formControlName="descripcionPregunta" rows="3"
+            placeholder="Ej. ¿Cuál es tu opinión sobre el servicio recibido?"></textarea>
+          @if (f['descripcionPregunta'].invalid && f['descripcionPregunta'].touched) {
+            <span class="field-error">El enunciado es obligatorio</span>
+          }
+        </div>
+
+        <!-- Obligatoria -->
+        <div class="form-check">
+          <input type="checkbox" id="obligatoria" formControlName="obligatoriaPregunta" />
+          <label for="obligatoria">Pregunta obligatoria</label>
+        </div>
+
+        <!-- Vista previa -->
+        <div class="preview-section">
+          <p class="preview-label">Vista previa</p>
+          <div class="preview-box">
+            <p class="preview-question">
+              {{ f['descripcionPregunta'].value || 'Escribe el enunciado para verlo aquí...' }}
+              @if (f['obligatoriaPregunta'].value) { <span class="required"> *</span> }
+            </p>
+            @if (tipoTextoSeleccionado === 'corta') {
+              <input type="text" placeholder="Escribe tu respuesta aquí..." disabled class="preview-input" />
+            } @else {
+              <textarea rows="3" placeholder="Escribe tu respuesta aquí..." disabled class="preview-textarea"></textarea>
+            }
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="cerrarModal()">Cancelar</button>
+          <button type="submit" class="btn-primary">{{ editando ? 'Actualizar' : 'Agregar pregunta' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

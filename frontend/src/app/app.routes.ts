@@ -17,6 +17,7 @@ export const routes: Routes = [
       { path: 'roles', loadComponent: () => import('./modules/roles/roles.component').then(m => m.RolesComponent) },
       { path: 'privilegios', loadComponent: () => import('./modules/privilegios/privilegios.component').then(m => m.PrivilegiosComponent) },
       { path: 'encuestas', loadComponent: () => import('./modules/encuestas/encuestas.component').then(m => m.EncuestasComponent) },
+      { path: 'encuestas/:idEncuesta/preguntas', loadComponent: () => import('./modules/preguntas/preguntas.component').then(m => m.PreguntasComponent) },
     ]
   },
   { path: '**', redirectTo: 'login' }
