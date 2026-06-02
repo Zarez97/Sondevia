@@ -29,9 +29,14 @@ public class Encuesta {
     @Column(length = 500)
     private String instruccionesEncuesta;
 
+    @Column(length = 150)
+    private String grupoMeta;
+
     private Integer estadoEncuesta;
 
     private LocalDate fechaCreacion;
+
+    private LocalDate fechaCierre;
 
     @ManyToOne
     @JoinColumn(name = "id_user", nullable = false)
@@ -77,13 +82,14 @@ public class Encuesta {
         this.estadoEncuesta = estadoEncuesta;
     }
 
-    public LocalDate getFechaCreacion() {
-        return fechaCreacion;
-    }
+    public String getGrupoMeta() { return grupoMeta; }
+    public void setGrupoMeta(String grupoMeta) { this.grupoMeta = grupoMeta; }
 
-    public void setFechaCreacion(LocalDate fechaCreacion) {
-        this.fechaCreacion = fechaCreacion;
-    }
+    public LocalDate getFechaCreacion() { return fechaCreacion; }
+    public void setFechaCreacion(LocalDate fechaCreacion) { this.fechaCreacion = fechaCreacion; }
+
+    public LocalDate getFechaCierre() { return fechaCierre; }
+    public void setFechaCierre(LocalDate fechaCierre) { this.fechaCierre = fechaCierre; }
 
     public Usuario getUsuario() {
         return usuario;
