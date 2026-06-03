@@ -53,7 +53,7 @@
               <div class="opciones-preview">
                 @for (op of p.opciones; track op.idOpcionRespuesta) {
                   <label class="opcion-preview-item">
-                    <input type="radio" disabled />
+                    <input [type]="p.tipoPreguntaCerrada === 'ELECCION_MULTIPLE' ? 'checkbox' : 'radio'" disabled />
                     <span>{{ op.textoOpcion }}</span>
                   </label>
                 }
@@ -129,6 +129,11 @@
                 <button type="button" class="tipo-btn" [class.active]="tipoCerrada === 'ELECCION_UNICA'"
                   (click)="seleccionarTipoCerrada('ELECCION_UNICA')">
                   Politómica
+                  <span class="subtipo-hint">Una opción</span>
+                </button>
+                <button type="button" class="tipo-btn" [class.active]="tipoCerrada === 'ELECCION_MULTIPLE'"
+                  (click)="seleccionarTipoCerrada('ELECCION_MULTIPLE')">
+                  Múltiple
                   <span class="subtipo-hint">Varias opciones</span>
                 </button>
               </div>
@@ -161,7 +166,7 @@
                   }
                 </div>
               }
-              @if (tipoCerrada === 'ELECCION_UNICA') {
+              @if (tipoCerrada === 'ELECCION_UNICA' || tipoCerrada === 'ELECCION_MULTIPLE') {
                 <button type="button" class="btn-add-opcion" (click)="agregarOpcion()">+ Agregar opción</button>
               }
             </div>
@@ -194,7 +199,7 @@
                 @for (op of opciones; track trackByIndex($index)) {
                   @if (op.trim()) {
                     <label class="opcion-preview-item">
-                      <input type="radio" disabled />
+                      <input [type]="esMultiple() ? 'checkbox' : 'radio'" disabled />
                       <span>{{ op }}</span>
                     </label>
                   }

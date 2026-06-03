@@ -7,7 +7,7 @@ import { EncuestaService, Encuesta } from '../../core/services/encuesta.service'
 
 type TipoPrincipal = 'ABIERTA' | 'CERRADA';
 type TipoTexto = 'corta' | 'larga';
-type TipoCerrada = 'DICOTOMICA' | 'ELECCION_UNICA';
+type TipoCerrada = 'DICOTOMICA' | 'ELECCION_UNICA' | 'ELECCION_MULTIPLE';
 
 @Component({
   selector: 'app-preguntas',
@@ -107,6 +107,10 @@ export class PreguntasComponent implements OnInit {
     }
   }
 
+  esMultiple(): boolean {
+    return this.tipoCerrada === 'ELECCION_MULTIPLE';
+  }
+
   agregarOpcion(): void {
     this.opciones.push('');
   }
@@ -128,12 +132,16 @@ export class PreguntasComponent implements OnInit {
       }
     }
 
+    const tipoCerradaBackend = this.tipoCerrada === 'DICOTOMICA' || this.tipoCerrada === 'ELECCION_UNICA'
+      ? 'ELECCION_UNICA'
+      : 'ELECCION_MULTIPLE';
+
     const data: PreguntaRequest = {
       descripcionPregunta: this.form.value.descripcionPregunta,
       obligatoriaPregunta: this.form.value.obligatoriaPregunta ?? false,
       tipoPregunta: this.tipoPrincipal,
       ...(this.tipoPrincipal === 'CERRADA' && {
-        tipoPreguntaCerrada: 'ELECCION_UNICA',
+        tipoPreguntaCerrada: tipoCerradaBackend,
         opciones: this.opciones.filter(o => o.trim() !== '')
       })
     };
@@ -168,6 +176,7 @@ export class PreguntasComponent implements OnInit {
   labelTipo(p: Pregunta): string {
     if (p.tipoPregunta === 'ABIERTA') return 'Abierta';
     if (p.tipoPregunta === 'CERRADA') {
+      if (p.tipoPreguntaCerrada === 'ELECCION_MULTIPLE') return 'Elección Múltiple';
       return p.opciones?.length === 2 ? 'Dicotómica' : 'Politómica';
     }
     return p.tipoPregunta;
@@ -175,7 +184,10 @@ export class PreguntasComponent implements OnInit {
 
   colorTipo(p: Pregunta): string {
     if (p.tipoPregunta === 'ABIERTA') return 'tipo-abierta';
-    if (p.tipoPregunta === 'CERRADA') return p.opciones?.length === 2 ? 'tipo-dicotomica' : 'tipo-politomica';
+    if (p.tipoPregunta === 'CERRADA') {
+      if (p.tipoPreguntaCerrada === 'ELECCION_MULTIPLE') return 'tipo-multiple';
+      return p.opciones?.length === 2 ? 'tipo-dicotomica' : 'tipo-politomica';
+    }
     return '';
   }
 }

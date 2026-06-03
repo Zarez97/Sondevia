@@ -67,10 +67,13 @@
 .pregunta-header { display: flex; gap: 8px; align-items: center; }
 
 .tipo-badge {
-  background: #f0fdf4; color: #16a34a;
   padding: 2px 8px; border-radius: 20px;
   font-size: 0.72rem; font-weight: 600;
 }
+.tipo-abierta { background: #f0fdf4; color: #16a34a; }
+.tipo-dicotomica { background: #eff6ff; color: #3b82f6; }
+.tipo-politomica { background: #faf5ff; color: #7c3aed; }
+.tipo-multiple { background: #fff7ed; color: #ea580c; }
 
 .obligatoria-badge {
   background: #fef3c7; color: #d97706;
