@@ -1,6 +1,4 @@
 <div class="page">
-
-  <!-- Header -->
   <div class="page-header">
     <div class="header-left">
       <button class="btn-back" (click)="volver()">
@@ -10,7 +8,7 @@
         Encuestas
       </button>
       @if (encuesta) {
-        <div class="header-info">
+        <div>
           <h1 class="page-title">{{ encuesta.tituloEncuesta }}</h1>
           <p class="page-subtitle">
             {{ preguntas.length }} pregunta{{ preguntas.length !== 1 ? 's' : '' }} ·
@@ -26,12 +24,11 @@
 
   @if (error) { <div class="alert-error">{{ error }}</div> }
 
-  <!-- Lista de preguntas -->
   @if (cargando) {
     <div class="empty-state">Cargando preguntas...</div>
   } @else if (preguntas.length === 0) {
     <div class="empty-state">
-      <p>Esta encuesta no tiene preguntas.</p>
+      <p>Esta encuesta no tiene preguntas aún.</p>
       @if (enDiseno) { <p>Haz clic en <strong>+ Agregar pregunta</strong> para comenzar.</p> }
     </div>
   } @else {
@@ -41,15 +38,27 @@
           <div class="pregunta-numero">{{ i + 1 }}</div>
           <div class="pregunta-body">
             <div class="pregunta-header">
-              <span class="tipo-badge">Abierta</span>
+              <span class="tipo-badge {{ colorTipo(p) }}">{{ labelTipo(p) }}</span>
               @if (p.obligatoriaPregunta) {
                 <span class="obligatoria-badge">Obligatoria</span>
               }
             </div>
             <p class="pregunta-texto">{{ p.descripcionPregunta }}</p>
-            <div class="pregunta-preview">
-              <input type="text" placeholder="Respuesta corta del encuestado..." disabled class="preview-input" />
-            </div>
+
+            <!-- Preview según tipo -->
+            @if (p.tipoPregunta === 'ABIERTA') {
+              <input type="text" placeholder="Respuesta del encuestado..." disabled class="preview-input" />
+            }
+            @if (p.tipoPregunta === 'CERRADA') {
+              <div class="opciones-preview">
+                @for (op of p.opciones; track op.idOpcionRespuesta) {
+                  <label class="opcion-preview-item">
+                    <input type="radio" disabled />
+                    <span>{{ op.textoOpcion }}</span>
+                  </label>
+                }
+              </div>
+            }
           </div>
           @if (enDiseno) {
             <div class="pregunta-actions">
@@ -74,51 +83,90 @@
   }
 </div>
 
-<!-- Modal -->
 @if (mostrarModal) {
   <div class="modal-overlay" (click)="cerrarModal()">
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2>{{ editando ? 'Editar pregunta' : 'Nueva pregunta abierta' }}</h2>
+        <h2>{{ editando ? 'Editar pregunta' : 'Nueva pregunta' }}</h2>
         <button class="btn-close" (click)="cerrarModal()">✕</button>
       </div>
 
       <form [formGroup]="form" (ngSubmit)="guardar()" class="modal-body">
         @if (errorModal) { <div class="alert-error">{{ errorModal }}</div> }
 
-        <!-- Tipo de texto (solo en creación) -->
+        <!-- Tipo principal -->
         @if (!editando) {
           <div class="form-group">
-            <label>Tipo de respuesta</label>
+            <label>Tipo de pregunta</label>
             <div class="tipo-selector">
-              <button type="button" class="tipo-btn" [class.active]="tipoTextoSeleccionado === 'corta'"
-                (click)="seleccionarTipoTexto('corta')">
+              <button type="button" class="tipo-btn" [class.active]="tipoPrincipal === 'ABIERTA'"
+                (click)="seleccionarTipoPrincipal('ABIERTA')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="15" y2="6"/>
                 </svg>
-                Texto corto
+                Abierta
               </button>
-              <button type="button" class="tipo-btn" [class.active]="tipoTextoSeleccionado === 'larga'"
-                (click)="seleccionarTipoTexto('larga')">
+              <button type="button" class="tipo-btn" [class.active]="tipoPrincipal === 'CERRADA'"
+                (click)="seleccionarTipoPrincipal('CERRADA')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/>
-                  <line x1="3" y1="18" x2="15" y2="18"/>
+                  <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
                 </svg>
-                Texto largo
+                Cerrada
               </button>
             </div>
           </div>
+
+          <!-- Subtipo cerrada -->
+          @if (tipoPrincipal === 'CERRADA') {
+            <div class="form-group">
+              <label>Subtipo</label>
+              <div class="tipo-selector">
+                <button type="button" class="tipo-btn" [class.active]="tipoCerrada === 'DICOTOMICA'"
+                  (click)="seleccionarTipoCerrada('DICOTOMICA')">
+                  Dicotómica
+                  <span class="subtipo-hint">Sí / No</span>
+                </button>
+                <button type="button" class="tipo-btn" [class.active]="tipoCerrada === 'ELECCION_UNICA'"
+                  (click)="seleccionarTipoCerrada('ELECCION_UNICA')">
+                  Politómica
+                  <span class="subtipo-hint">Varias opciones</span>
+                </button>
+              </div>
+            </div>
+          }
         }
 
         <!-- Enunciado -->
         <div class="form-group">
-          <label>Enunciado de la pregunta <span class="required">*</span></label>
+          <label>Enunciado <span class="required">*</span></label>
           <textarea formControlName="descripcionPregunta" rows="3"
-            placeholder="Ej. ¿Cuál es tu opinión sobre el servicio recibido?"></textarea>
+            placeholder="Escribe la pregunta..."></textarea>
           @if (f['descripcionPregunta'].invalid && f['descripcionPregunta'].touched) {
             <span class="field-error">El enunciado es obligatorio</span>
           }
         </div>
+
+        <!-- Opciones (preguntas cerradas) -->
+        @if (tipoPrincipal === 'CERRADA') {
+          <div class="form-group">
+            <label>Opciones de respuesta</label>
+            <div class="opciones-editor">
+              @for (op of opciones; track trackByIndex($index); let i = $index) {
+                <div class="opcion-row">
+                  <span class="opcion-radio-mock"></span>
+                  <input type="text" [(ngModel)]="opciones[i]" [ngModelOptions]="{standalone: true}"
+                    placeholder="Opción {{ i + 1 }}" class="opcion-input" [readonly]="tipoCerrada === 'DICOTOMICA'" />
+                  @if (tipoCerrada !== 'DICOTOMICA' && opciones.length > 2) {
+                    <button type="button" class="btn-remove-opcion" (click)="eliminarOpcion(i)">✕</button>
+                  }
+                </div>
+              }
+              @if (tipoCerrada === 'ELECCION_UNICA') {
+                <button type="button" class="btn-add-opcion" (click)="agregarOpcion()">+ Agregar opción</button>
+              }
+            </div>
+          </div>
+        }
 
         <!-- Obligatoria -->
         <div class="form-check">
@@ -131,13 +179,27 @@
           <p class="preview-label">Vista previa</p>
           <div class="preview-box">
             <p class="preview-question">
-              {{ f['descripcionPregunta'].value || 'Escribe el enunciado para verlo aquí...' }}
+              {{ f['descripcionPregunta'].value || 'Escribe el enunciado...' }}
               @if (f['obligatoriaPregunta'].value) { <span class="required"> *</span> }
             </p>
-            @if (tipoTextoSeleccionado === 'corta') {
-              <input type="text" placeholder="Escribe tu respuesta aquí..." disabled class="preview-input" />
-            } @else {
-              <textarea rows="3" placeholder="Escribe tu respuesta aquí..." disabled class="preview-textarea"></textarea>
+            @if (tipoPrincipal === 'ABIERTA') {
+              @if (tipoTexto === 'corta') {
+                <input type="text" placeholder="Respuesta corta..." disabled class="preview-input" />
+              } @else {
+                <textarea rows="3" placeholder="Respuesta larga..." disabled class="preview-textarea"></textarea>
+              }
+            }
+            @if (tipoPrincipal === 'CERRADA') {
+              <div class="opciones-preview">
+                @for (op of opciones; track trackByIndex($index)) {
+                  @if (op.trim()) {
+                    <label class="opcion-preview-item">
+                      <input type="radio" disabled />
+                      <span>{{ op }}</span>
+                    </label>
+                  }
+                }
+              </div>
             }
           </div>
         </div>

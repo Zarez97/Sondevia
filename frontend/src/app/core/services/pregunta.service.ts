@@ -2,6 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export interface Opcion {
+  idOpcionRespuesta: number;
+  textoOpcion: string;
+  valorNumerico: number;
+}
+
 export interface Pregunta {
   idPregunta: number;
   descripcionPregunta: string;
@@ -10,12 +16,15 @@ export interface Pregunta {
   tipoPreguntaCerrada: string | null;
   esMixta: boolean;
   idEncuesta: number;
+  opciones: Opcion[];
 }
 
 export interface PreguntaRequest {
   descripcionPregunta: string;
   obligatoriaPregunta: boolean;
   tipoPregunta: string;
+  tipoPreguntaCerrada?: string;
+  opciones?: string[];
 }
 
 @Injectable({ providedIn: 'root' })

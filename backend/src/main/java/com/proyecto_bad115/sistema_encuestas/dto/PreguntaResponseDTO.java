@@ -3,6 +3,8 @@ package com.proyecto_bad115.sistema_encuestas.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class PreguntaResponseDTO {
@@ -13,5 +15,5 @@ public class PreguntaResponseDTO {
     private String tipoPreguntaCerrada;
     private Boolean esMixta;
     private Integer idEncuesta;
-    private Integer orden;
+    private List<OpcionResponseDTO> opciones;
 }

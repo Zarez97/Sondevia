@@ -1,14 +1,18 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PreguntaService, Pregunta, PreguntaRequest } from '../../core/services/pregunta.service';
 import { EncuestaService, Encuesta } from '../../core/services/encuesta.service';
 
+type TipoPrincipal = 'ABIERTA' | 'CERRADA';
+type TipoTexto = 'corta' | 'larga';
+type TipoCerrada = 'DICOTOMICA' | 'ELECCION_UNICA';
+
 @Component({
   selector: 'app-preguntas',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './preguntas.component.html',
   styleUrl: './preguntas.component.css'
 })
@@ -17,14 +21,16 @@ export class PreguntasComponent implements OnInit {
   preguntas: Pregunta[] = [];
   cargando = true;
   mostrarModal = false;
-  mostrarPreview = false;
   editando: Pregunta | null = null;
   error = '';
   errorModal = '';
   form: FormGroup;
   idEncuesta!: number;
 
-  tipoTextoSeleccionado: 'corta' | 'larga' = 'corta';
+  tipoPrincipal: TipoPrincipal = 'ABIERTA';
+  tipoTexto: TipoTexto = 'corta';
+  tipoCerrada: TipoCerrada = 'DICOTOMICA';
+  opciones: string[] = ['', ''];
 
   constructor(
     private route: ActivatedRoute,
@@ -36,8 +42,7 @@ export class PreguntasComponent implements OnInit {
   ) {
     this.form = this.fb.group({
       descripcionPregunta: ['', [Validators.required, Validators.maxLength(500)]],
-      obligatoriaPregunta: [false],
-      tipoTexto: ['corta']
+      obligatoriaPregunta: [false]
     });
   }
 
@@ -64,37 +69,73 @@ export class PreguntasComponent implements OnInit {
 
   abrirAgregar(): void {
     this.editando = null;
-    this.form.reset({ obligatoriaPregunta: false, tipoTexto: 'corta' });
-    this.tipoTextoSeleccionado = 'corta';
+    this.form.reset({ obligatoriaPregunta: false });
+    this.tipoPrincipal = 'ABIERTA';
+    this.tipoTexto = 'corta';
+    this.tipoCerrada = 'DICOTOMICA';
+    this.opciones = ['Sí', 'No'];
     this.errorModal = '';
     this.mostrarModal = true;
-    this.mostrarPreview = false;
   }
 
   abrirEditar(p: Pregunta): void {
     this.editando = p;
     this.form.patchValue({
       descripcionPregunta: p.descripcionPregunta,
-      obligatoriaPregunta: p.obligatoriaPregunta,
-      tipoTexto: 'corta'
+      obligatoriaPregunta: p.obligatoriaPregunta
     });
+    this.tipoPrincipal = p.tipoPregunta as TipoPrincipal;
+    this.tipoCerrada = (p.tipoPreguntaCerrada as TipoCerrada) ?? 'DICOTOMICA';
+    this.opciones = p.opciones?.length ? p.opciones.map(o => o.textoOpcion) : ['', ''];
     this.errorModal = '';
     this.mostrarModal = true;
-    this.mostrarPreview = false;
   }
 
-  seleccionarTipoTexto(tipo: 'corta' | 'larga'): void {
-    this.tipoTextoSeleccionado = tipo;
-    this.form.patchValue({ tipoTexto: tipo });
+  seleccionarTipoPrincipal(tipo: TipoPrincipal): void {
+    this.tipoPrincipal = tipo;
+    if (tipo === 'CERRADA') {
+      this.seleccionarTipoCerrada(this.tipoCerrada);
+    }
   }
+
+  seleccionarTipoCerrada(tipo: TipoCerrada): void {
+    this.tipoCerrada = tipo;
+    if (tipo === 'DICOTOMICA') {
+      this.opciones = ['Sí', 'No'];
+    } else if (!this.editando) {
+      this.opciones = ['', ''];
+    }
+  }
+
+  agregarOpcion(): void {
+    this.opciones.push('');
+  }
+
+  eliminarOpcion(index: number): void {
+    if (this.opciones.length > 2) this.opciones.splice(index, 1);
+  }
+
+  trackByIndex(index: number): number { return index; }
 
   guardar(): void {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
 
+    if (this.tipoPrincipal === 'CERRADA') {
+      const validas = this.opciones.filter(o => o.trim() !== '');
+      if (validas.length < 2) {
+        this.errorModal = 'Debe ingresar al menos 2 opciones.';
+        return;
+      }
+    }
+
     const data: PreguntaRequest = {
       descripcionPregunta: this.form.value.descripcionPregunta,
       obligatoriaPregunta: this.form.value.obligatoriaPregunta ?? false,
-      tipoPregunta: 'ABIERTA'
+      tipoPregunta: this.tipoPrincipal,
+      ...(this.tipoPrincipal === 'CERRADA' && {
+        tipoPreguntaCerrada: 'ELECCION_UNICA',
+        opciones: this.opciones.filter(o => o.trim() !== '')
+      })
     };
 
     const accion = this.editando
@@ -108,25 +149,33 @@ export class PreguntasComponent implements OnInit {
   }
 
   eliminar(p: Pregunta): void {
-    if (!confirm(`¿Eliminar la pregunta "${p.descripcionPregunta}"?`)) return;
+    if (!confirm(`¿Eliminar "${p.descripcionPregunta}"?`)) return;
     this.preguntaService.eliminar(this.idEncuesta, p.idPregunta).subscribe({
       next: () => this.cargarPreguntas(),
       error: (e) => alert(e.error?.mensaje || 'No se pudo eliminar.')
     });
   }
 
-  togglePreview(): void {
-    this.mostrarPreview = !this.mostrarPreview;
-  }
-
-  volver(): void {
-    this.router.navigate(['/dashboard/encuestas']);
-  }
-
-  cerrarModal(): void {
-    this.mostrarModal = false;
-  }
-
+  volver(): void { this.router.navigate(['/dashboard/encuestas']); }
+  cerrarModal(): void { this.mostrarModal = false; }
   get f() { return this.form.controls; }
   get enDiseno(): boolean { return this.encuesta?.estadoEncuesta === 1; }
+
+  esCerradaDicotomica(p: Pregunta): boolean {
+    return p.tipoPregunta === 'CERRADA' && p.opciones?.length === 2;
+  }
+
+  labelTipo(p: Pregunta): string {
+    if (p.tipoPregunta === 'ABIERTA') return 'Abierta';
+    if (p.tipoPregunta === 'CERRADA') {
+      return p.opciones?.length === 2 ? 'Dicotómica' : 'Politómica';
+    }
+    return p.tipoPregunta;
+  }
+
+  colorTipo(p: Pregunta): string {
+    if (p.tipoPregunta === 'ABIERTA') return 'tipo-abierta';
+    if (p.tipoPregunta === 'CERRADA') return p.opciones?.length === 2 ? 'tipo-dicotomica' : 'tipo-politomica';
+    return '';
+  }
 }
