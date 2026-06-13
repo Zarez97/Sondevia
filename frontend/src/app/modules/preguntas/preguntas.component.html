@@ -39,6 +39,9 @@
           <div class="pregunta-body">
             <div class="pregunta-header">
               <span class="tipo-badge {{ colorTipo(p) }}">{{ labelTipo(p) }}</span>
+              @if (p.esMixta) {
+                <span class="tipo-badge tipo-mixta">+ Otros</span>
+              }
               @if (p.obligatoriaPregunta) {
                 <span class="obligatoria-badge">Obligatoria</span>
               }
@@ -76,9 +79,12 @@
               } @else {
                 <div class="opciones-preview">
                   @for (op of p.opciones; track op.idOpcionRespuesta) {
-                    <label class="opcion-preview-item">
+                    <label class="opcion-preview-item" [class.opcion-otros]="op.esMixta">
                       <input [type]="p.tipoPreguntaCerrada === 'ELECCION_MULTIPLE' ? 'checkbox' : 'radio'" disabled />
-                      <span>{{ op.textoOpcion }}</span>
+                      <span>{{ op.textoOpcion }}{{ op.esMixta ? ':' : '' }}</span>
+                      @if (op.esMixta) {
+                        <input type="text" class="otros-input" placeholder="Especifique..." disabled />
+                      }
                     </label>
                   }
                 </div>
@@ -250,6 +256,14 @@
               </div>
             </div>
           }
+
+          <!-- Opción "Otros" (pregunta mixta) -->
+          @if (puedeSerMixta()) {
+            <div class="form-check">
+              <input type="checkbox" id="esMixta" [(ngModel)]="esMixtaPregunta" [ngModelOptions]="{standalone: true}" />
+              <label for="esMixta">Permitir opción <strong>"Otros"</strong> con texto libre</label>
+            </div>
+          }
         }
 
         <!-- Obligatoria -->
@@ -329,6 +343,13 @@
                         <span>{{ op }}</span>
                       </label>
                     }
+                  }
+                  @if (puedeSerMixta() && esMixtaPregunta) {
+                    <label class="opcion-preview-item opcion-otros">
+                      <input [type]="esMultiple() ? 'checkbox' : 'radio'" disabled />
+                      <span>Otros:</span>
+                      <input type="text" class="otros-input" placeholder="Especifique..." disabled />
+                    </label>
                   }
                 </div>
               }

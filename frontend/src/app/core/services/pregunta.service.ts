@@ -6,6 +6,7 @@ export interface Opcion {
   idOpcionRespuesta: number;
   textoOpcion: string;
   valorNumerico: number;
+  esMixta?: boolean;
 }
 
 export interface Pregunta {
@@ -24,6 +25,7 @@ export interface PreguntaRequest {
   obligatoriaPregunta: boolean;
   tipoPregunta: string;
   tipoPreguntaCerrada?: string;
+  esMixta?: boolean;
   opciones?: string[];
 }
 

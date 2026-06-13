@@ -9,4 +9,5 @@ public class OpcionResponseDTO {
     private Integer idOpcionRespuesta;
     private String textoOpcion;
     private Integer valorNumerico;
+    private Boolean esMixta;
 }

@@ -75,6 +75,7 @@
 .tipo-politomica { background: #faf5ff; color: #7c3aed; }
 .tipo-multiple { background: #fff7ed; color: #ea580c; }
 .tipo-ranking  { background: #fdf4ff; color: #a21caf; }
+.tipo-mixta    { background: #ecfeff; color: #0891b2; }
 
 .obligatoria-badge {
   background: #fef3c7; color: #d97706;
@@ -209,7 +210,17 @@ textarea { resize: vertical; }
   display: flex; align-items: center; gap: 8px;
   font-size: 0.875rem; color: #374151; cursor: default;
 }
-.opcion-preview-item input { cursor: default; }
+.opcion-preview-item input[type="radio"],
+.opcion-preview-item input[type="checkbox"] { cursor: default; }
+
+/* Opción "Otros" (mixta) */
+.opcion-otros { color: #6b7280; }
+.otros-input {
+  flex: 1; min-width: 0;
+  border: 1px solid #e5e7eb; border-radius: 6px;
+  padding: 4px 8px; font-size: 0.8rem; color: #9ca3af;
+  background: #f9fafb; cursor: not-allowed;
+}
 
 /* Ranking preview */
 .ranking-preview-item {

@@ -49,11 +49,13 @@ public class PreguntaService {
             validarPreguntaCerrada(dto);
         }
 
+        boolean esMixta = tipo == TipoPregunta.CERRADA && Boolean.TRUE.equals(dto.getEsMixta());
+
         Pregunta pregunta = new Pregunta();
         pregunta.setDescripcionPregunta(dto.getDescripcionPregunta());
         pregunta.setObligatoriaPregunta(dto.getObligatoriaPregunta());
         pregunta.setTipoPregunta(tipo);
-        pregunta.setEsMixta(false);
+        pregunta.setEsMixta(esMixta);
         pregunta.setEncuesta(encuesta);
 
         if (tipo == TipoPregunta.CERRADA && dto.getTipoPreguntaCerrada() != null) {
@@ -61,7 +63,7 @@ public class PreguntaService {
         }
 
         Pregunta guardada = preguntaRepository.save(pregunta);
-        guardarOpciones(guardada, dto.getOpciones());
+        guardarOpciones(guardada, dto.getOpciones(), esMixta);
 
         return toDTO(guardada);
     }
@@ -79,11 +81,15 @@ public class PreguntaService {
             validarPreguntaCerrada(dto);
         }
 
+        boolean esMixta = pregunta.getTipoPregunta() == TipoPregunta.CERRADA
+                && Boolean.TRUE.equals(dto.getEsMixta());
+
         pregunta.setDescripcionPregunta(dto.getDescripcionPregunta());
         pregunta.setObligatoriaPregunta(dto.getObligatoriaPregunta());
+        pregunta.setEsMixta(esMixta);
 
         opcionRespuestaRepository.deleteByPreguntaIdPregunta(idPregunta);
-        guardarOpciones(pregunta, dto.getOpciones());
+        guardarOpciones(pregunta, dto.getOpciones(), esMixta);
 
         return toDTO(preguntaRepository.save(pregunta));
     }
@@ -101,15 +107,24 @@ public class PreguntaService {
         preguntaRepository.deleteById(idPregunta);
     }
 
-    private void guardarOpciones(Pregunta pregunta, List<String> textos) {
+    private void guardarOpciones(Pregunta pregunta, List<String> textos, boolean esMixta) {
         if (textos == null || textos.isEmpty()) return;
-        for (int i = 0; i < textos.size(); i++) {
+        int orden = 0;
+        for (; orden < textos.size(); orden++) {
             OpcionRespuesta op = new OpcionRespuesta();
-            op.setTextoOpcion(textos.get(i));
-            op.setValorNumerico(i + 1);
+            op.setTextoOpcion(textos.get(orden));
+            op.setValorNumerico(orden + 1);
             op.setEsMixta(false);
             op.setPregunta(pregunta);
             opcionRespuestaRepository.save(op);
+        }
+        if (esMixta) {
+            OpcionRespuesta otros = new OpcionRespuesta();
+            otros.setTextoOpcion("Otros");
+            otros.setValorNumerico(orden + 1);
+            otros.setEsMixta(true);
+            otros.setPregunta(pregunta);
+            opcionRespuestaRepository.save(otros);
         }
     }
 
@@ -148,6 +163,7 @@ public class PreguntaService {
                     o.setIdOpcionRespuesta(op.getIdOpcionRespuesta());
                     o.setTextoOpcion(op.getTextoOpcion());
                     o.setValorNumerico(op.getValorNumerico());
+                    o.setEsMixta(op.getEsMixta());
                     return o;
                 }).toList();
         dto.setOpciones(opciones);

@@ -22,5 +22,7 @@ public class PreguntaRequestDTO {
 
     private String tipoPreguntaCerrada;
 
+    private Boolean esMixta;
+
     private List<String> opciones;
 }

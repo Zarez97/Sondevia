@@ -31,6 +31,7 @@ export class PreguntasComponent implements OnInit {
   tipoTexto: TipoTexto = 'corta';
   tipoCerrada: TipoCerrada = 'DICOTOMICA';
   opciones: string[] = ['', ''];
+  esMixtaPregunta = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -74,6 +75,7 @@ export class PreguntasComponent implements OnInit {
     this.tipoTexto = 'corta';
     this.tipoCerrada = 'DICOTOMICA';
     this.opciones = ['Sí', 'No'];
+    this.esMixtaPregunta = false;
     this.errorModal = '';
     this.mostrarModal = true;
   }
@@ -86,7 +88,10 @@ export class PreguntasComponent implements OnInit {
     });
     this.tipoPrincipal = p.tipoPregunta as TipoPrincipal;
     this.tipoCerrada = (p.tipoPreguntaCerrada as TipoCerrada) ?? 'DICOTOMICA';
-    this.opciones = p.opciones?.length ? p.opciones.map(o => o.textoOpcion) : ['', ''];
+    this.esMixtaPregunta = !!p.esMixta;
+    // La opción "Otros" (esMixta) es implícita: no se muestra en el editor
+    const editables = p.opciones?.filter(o => !o.esMixta) ?? [];
+    this.opciones = editables.length ? editables.map(o => o.textoOpcion) : ['', ''];
     this.errorModal = '';
     this.mostrarModal = true;
   }
@@ -107,6 +112,13 @@ export class PreguntasComponent implements OnInit {
       else if (tipo === 'NOMINAL') this.opciones = ['Nunca', 'A veces', 'Siempre'];
       else this.opciones = ['', ''];
     }
+    // "Otros" solo aplica a elección única/múltiple
+    if (!this.puedeSerMixta()) this.esMixtaPregunta = false;
+  }
+
+  // Solo elección única o múltiple admiten campo "Otros" (pregunta mixta)
+  puedeSerMixta(): boolean {
+    return this.tipoCerrada === 'ELECCION_UNICA' || this.tipoCerrada === 'ELECCION_MULTIPLE';
   }
 
   esMultiple(): boolean { return this.tipoCerrada === 'ELECCION_MULTIPLE'; }
@@ -158,6 +170,7 @@ export class PreguntasComponent implements OnInit {
       tipoPregunta: this.tipoPrincipal,
       ...(this.tipoPrincipal === 'CERRADA' && {
         tipoPreguntaCerrada: tipoCerradaBackend,
+        esMixta: this.puedeSerMixta() && this.esMixtaPregunta,
         opciones: this.opciones.filter(o => o.trim() !== '')
       })
     };
