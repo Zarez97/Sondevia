@@ -47,6 +47,12 @@
               Preguntas
             </button>
             @if (e.estadoEncuesta === 1) {
+              <button class="btn-action btn-publicar" (click)="abrirPublicar(e)" title="Publicar encuesta">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/>
+                </svg>
+                Publicar
+              </button>
               <button class="btn-icon btn-edit" (click)="abrirEditar(e)" title="Editar">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -59,6 +65,15 @@
                   <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
                   <path d="M10 11v6M14 11v6"/>
                 </svg>
+              </button>
+            }
+            @if (e.estadoEncuesta === 2 && e.tokenPublico) {
+              <button class="btn-action btn-enlace" (click)="copiarEnlace(e.tokenPublico)" title="Copiar enlace público">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                </svg>
+                Copiar enlace
               </button>
             }
           </div>
@@ -112,6 +127,93 @@
           <button type="submit" class="btn-primary">{{ editando ? 'Actualizar' : 'Crear Encuesta' }}</button>
         </div>
       </form>
+    </div>
+  </div>
+}
+
+<!-- Modal de publicación (CU08) -->
+@if (mostrarPublicar && encuestaPublicar) {
+  <div class="modal-overlay" (click)="cerrarPublicar()">
+    <div class="modal" (click)="$event.stopPropagation()">
+
+      @if (!publicadaOk) {
+        <!-- Vista previa + confirmación -->
+        <div class="modal-header">
+          <h2>Publicar encuesta</h2>
+          <button class="btn-close" (click)="cerrarPublicar()">✕</button>
+        </div>
+        <div class="modal-body">
+          @if (errorPublicar) {
+            <div class="alert-error">{{ errorPublicar }}</div>
+          }
+          <p class="publicar-intro">
+            Revisa la encuesta antes de publicarla. Una vez publicada, las preguntas
+            quedarán bloqueadas para edición.
+          </p>
+
+          <div class="preview-encuesta">
+            <h3 class="preview-titulo">{{ encuestaPublicar.tituloEncuesta }}</h3>
+            @if (encuestaPublicar.objetivoEncuesta) {
+              <p class="preview-campo"><strong>Objetivo:</strong> {{ encuestaPublicar.objetivoEncuesta }}</p>
+            }
+            @if (encuestaPublicar.instruccionesEncuesta) {
+              <p class="preview-campo"><strong>Instrucciones:</strong> {{ encuestaPublicar.instruccionesEncuesta }}</p>
+            }
+            @if (encuestaPublicar.grupoMeta) {
+              <p class="preview-campo"><strong>Dirigida a:</strong> {{ encuestaPublicar.grupoMeta }}</p>
+            }
+            <p class="preview-campo"><strong>Cierre:</strong> {{ encuestaPublicar.fechaCierre | date:'dd/MM/yyyy' }}</p>
+          </div>
+
+          <div class="preview-preguntas">
+            <p class="preview-label">Preguntas ({{ preguntasPreview.length }})</p>
+            @if (preguntasPreview.length === 0) {
+              <p class="preview-vacio">⚠ Esta encuesta no tiene preguntas. Agrega al menos una para poder publicar.</p>
+            } @else {
+              <ol class="preview-lista">
+                @for (p of preguntasPreview; track p.idPregunta) {
+                  <li>
+                    {{ p.descripcionPregunta }}
+                    @if (p.obligatoriaPregunta) { <span class="mini-badge">obligatoria</span> }
+                  </li>
+                }
+              </ol>
+            }
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="cerrarPublicar()">Cancelar</button>
+          <button type="button" class="btn-primary" (click)="confirmarPublicar()" [disabled]="publicando">
+            {{ publicando ? 'Publicando...' : 'Confirmar y publicar' }}
+          </button>
+        </div>
+      } @else {
+        <!-- Éxito: enlace público -->
+        <div class="modal-header">
+          <h2>¡Encuesta publicada!</h2>
+          <button class="btn-close" (click)="cerrarPublicar()">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="publicar-exito">
+            <div class="exito-icono">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M20 6 9 17l-5-5"/>
+              </svg>
+            </div>
+            <p>La encuesta ya está disponible. Comparte este enlace con tus encuestados:</p>
+          </div>
+          <div class="enlace-box">
+            <input type="text" [value]="linkPublico(publicadaOk.tokenPublico)" readonly class="enlace-input" />
+            <button type="button" class="btn-primary" (click)="copiarEnlace(publicadaOk.tokenPublico)">
+              {{ copiado ? '¡Copiado!' : 'Copiar' }}
+            </button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-primary" (click)="cerrarPublicar()">Listo</button>
+        </div>
+      }
+
     </div>
   </div>
 }

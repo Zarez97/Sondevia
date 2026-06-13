@@ -103,6 +103,14 @@
 .btn-preguntas:hover { background: var(--brand-primary-border); color: #fff; }
 .btn-preguntas svg { width: 14px; height: 14px; }
 
+.btn-publicar { background: #ecfdf5; color: #059669; }
+.btn-publicar:hover { background: #059669; color: #fff; }
+.btn-publicar svg { width: 14px; height: 14px; }
+
+.btn-enlace { background: var(--brand-primary-light); color: var(--brand-primary); }
+.btn-enlace:hover { background: var(--brand-primary); color: #fff; }
+.btn-enlace svg { width: 14px; height: 14px; }
+
 .btn-icon {
   display: flex; align-items: center; justify-content: center;
   width: 32px; height: 32px; border-radius: 6px; border: none;
@@ -155,3 +163,50 @@ textarea { resize: vertical; }
   display: flex; justify-content: flex-end; gap: 10px;
   padding-top: 8px; border-top: 1px solid #f3f4f6;
 }
+
+/* ── Modal de publicación (CU08) ─────────────────── */
+.publicar-intro { font-size: 0.875rem; color: #6b7280; }
+
+.preview-encuesta {
+  background: #f9fafb; border: 1px solid #e5e7eb;
+  border-radius: 8px; padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.preview-titulo { font-size: 1rem; font-weight: 700; color: #111827; }
+.preview-campo { font-size: 0.83rem; color: #4b5563; }
+.preview-campo strong { color: #374151; }
+
+.preview-preguntas { display: flex; flex-direction: column; gap: 8px; }
+.preview-label {
+  font-size: 0.78rem; font-weight: 600; color: #9ca3af;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.preview-vacio { font-size: 0.85rem; color: #d97706; }
+.preview-lista { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.preview-lista li { font-size: 0.875rem; color: #374151; }
+
+.mini-badge {
+  background: #fef3c7; color: #d97706;
+  padding: 1px 6px; border-radius: 10px;
+  font-size: 0.68rem; font-weight: 600; margin-left: 4px;
+}
+
+.publicar-exito {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; gap: 12px; padding: 8px 0 4px;
+}
+.publicar-exito p { font-size: 0.9rem; color: #374151; }
+.exito-icono {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: #ecfdf5; color: #059669;
+  display: flex; align-items: center; justify-content: center;
+}
+.exito-icono svg { width: 26px; height: 26px; }
+
+.enlace-box { display: flex; gap: 8px; }
+.enlace-input {
+  flex: 1; border: 1px solid #d1d5db; border-radius: 8px;
+  padding: 9px 12px; font-size: 0.83rem; color: #4b5563;
+  background: #f9fafb;
+}
+.enlace-box .btn-primary { white-space: nowrap; }

@@ -38,6 +38,10 @@ public class Encuesta {
 
     private LocalDate fechaCierre;
 
+    // CU08 - Token del enlace público único (se genera al publicar)
+    @Column(name = "token_publico", unique = true, length = 64)
+    private String tokenPublico;
+
     @ManyToOne
     @JoinColumn(name = "id_user", nullable = false)
     private Usuario usuario;
@@ -90,6 +94,9 @@ public class Encuesta {
 
     public LocalDate getFechaCierre() { return fechaCierre; }
     public void setFechaCierre(LocalDate fechaCierre) { this.fechaCierre = fechaCierre; }
+
+    public String getTokenPublico() { return tokenPublico; }
+    public void setTokenPublico(String tokenPublico) { this.tokenPublico = tokenPublico; }
 
     public Usuario getUsuario() {
         return usuario;

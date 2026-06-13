@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 
 @Service
 public class EncuestaService {
@@ -78,6 +79,50 @@ public class EncuestaService {
         return toDTO(encuestaRepository.save(encuesta));
     }
 
+    /**
+     * CU08 - Publica una encuesta: valida requisitos, genera el enlace único
+     * y cambia el estado a PUBLICADA (bloqueando la edición de preguntas).
+     */
+    public EncuestaResponseDTO publicar(Integer id) {
+        Encuesta encuesta = encuestaRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Encuesta no encontrada"));
+
+        if (encuesta.getEstadoEncuesta() != EstadoEncuesta.EN_DISENO) {
+            throw new IllegalStateException("Solo se pueden publicar encuestas en estado 'En diseño'");
+        }
+
+        // Campos obligatorios completos
+        if (isBlank(encuesta.getTituloEncuesta()) || isBlank(encuesta.getObjetivoEncuesta())
+                || isBlank(encuesta.getInstruccionesEncuesta())) {
+            throw new IllegalArgumentException("Debe completar título, objetivo e instrucciones antes de publicar");
+        }
+
+        // Al menos una pregunta configurada
+        if (preguntaRepository.countByEncuestaIdEncuesta(id) < 1) {
+            throw new IllegalArgumentException("Se requiere al menos una pregunta configurada para publicar la encuesta");
+        }
+
+        // Fecha de cierre definida y vigente
+        if (encuesta.getFechaCierre() == null) {
+            throw new IllegalArgumentException("Debe establecer una fecha de cierre antes de publicar");
+        }
+        if (encuesta.getFechaCierre().isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("La fecha de cierre ya venció. Actualícela antes de continuar");
+        }
+
+        // Generar enlace único (solo si aún no tiene) y publicar
+        if (isBlank(encuesta.getTokenPublico())) {
+            encuesta.setTokenPublico(UUID.randomUUID().toString().replace("-", ""));
+        }
+        encuesta.setEstadoEncuesta(EstadoEncuesta.PUBLICADA);
+
+        return toDTO(encuestaRepository.save(encuesta));
+    }
+
+    private boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
+    }
+
     public void eliminar(Integer id) {
         Encuesta encuesta = encuestaRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Encuesta no encontrada"));
@@ -101,6 +146,7 @@ public class EncuestaService {
         dto.setFechaCierre(e.getFechaCierre());
         dto.setNombreUsuario(e.getUsuario().getNombreUser());
         dto.setTotalPreguntas(preguntaRepository.countByEncuestaIdEncuesta(e.getIdEncuesta()));
+        dto.setTokenPublico(e.getTokenPublico());
         return dto;
     }
 

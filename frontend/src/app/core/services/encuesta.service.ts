@@ -14,6 +14,7 @@ export interface Encuesta {
   fechaCierre: string;
   nombreUsuario: string;
   totalPreguntas: number;
+  tokenPublico: string | null;
 }
 
 export interface EncuestaRequest {
@@ -48,5 +49,9 @@ export class EncuestaService {
 
   eliminar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.api}/${id}`);
+  }
+
+  publicar(id: number): Observable<Encuesta> {
+    return this.http.post<Encuesta>(`${this.api}/${id}/publicar`, {});
   }
 }

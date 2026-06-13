@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { EncuestaService, Encuesta, EncuestaRequest } from '../../core/services/encuesta.service';
+import { PreguntaService, Pregunta } from '../../core/services/pregunta.service';
 
 @Component({
   selector: 'app-encuestas',
@@ -20,8 +21,18 @@ export class EncuestasComponent implements OnInit {
   errorModal = '';
   form: FormGroup;
 
+  // CU08 - Publicación
+  mostrarPublicar = false;
+  encuestaPublicar: Encuesta | null = null;
+  preguntasPreview: Pregunta[] = [];
+  errorPublicar = '';
+  publicando = false;
+  publicadaOk: Encuesta | null = null;
+  copiado = false;
+
   constructor(
     private encuestaService: EncuestaService,
+    private preguntaService: PreguntaService,
     private fb: FormBuilder,
     private router: Router,
     private cdr: ChangeDetectorRef
@@ -95,6 +106,57 @@ export class EncuestasComponent implements OnInit {
 
   cerrarModal(): void {
     this.mostrarModal = false;
+  }
+
+  // ── CU08 - Publicar ──────────────────────────────────
+  abrirPublicar(e: Encuesta): void {
+    this.encuestaPublicar = e;
+    this.preguntasPreview = [];
+    this.errorPublicar = '';
+    this.publicadaOk = null;
+    this.copiado = false;
+    this.mostrarPublicar = true;
+    this.preguntaService.listar(e.idEncuesta).subscribe({
+      next: (data) => { this.preguntasPreview = data; this.cdr.detectChanges(); },
+      error: () => this.cdr.detectChanges()
+    });
+  }
+
+  confirmarPublicar(): void {
+    if (!this.encuestaPublicar || this.publicando) return;
+    this.publicando = true;
+    this.errorPublicar = '';
+    this.encuestaService.publicar(this.encuestaPublicar.idEncuesta).subscribe({
+      next: (res) => {
+        this.publicando = false;
+        this.publicadaOk = res;
+        this.cargar();
+        this.cdr.detectChanges();
+      },
+      error: (e) => {
+        this.publicando = false;
+        this.errorPublicar = e.error?.mensaje || 'No se pudo publicar la encuesta.';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  cerrarPublicar(): void {
+    this.mostrarPublicar = false;
+    this.encuestaPublicar = null;
+    this.publicadaOk = null;
+  }
+
+  linkPublico(token: string | null): string {
+    return token ? `${window.location.origin}/responder/${token}` : '';
+  }
+
+  copiarEnlace(token: string | null): void {
+    if (!token) return;
+    navigator.clipboard?.writeText(this.linkPublico(token));
+    this.copiado = true;
+    this.cdr.detectChanges();
+    setTimeout(() => { this.copiado = false; this.cdr.detectChanges(); }, 2000);
   }
 
   get f() { return this.form.controls; }
