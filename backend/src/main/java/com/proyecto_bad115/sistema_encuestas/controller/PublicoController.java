@@ -35,6 +35,17 @@ public class PublicoController {
         }
     }
 
+    @GetMapping("/encuestas/{token}/preguntas")
+    public ResponseEntity<?> preguntas(@PathVariable String token) {
+        try {
+            return ResponseEntity.ok(publicoService.cargarPreguntas(token));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("mensaje", e.getMessage()));
+        }
+    }
+
     @PostMapping("/encuestas/{token}/participar")
     public ResponseEntity<?> participar(@PathVariable String token,
                                         @Valid @RequestBody ParticipanteRequestDTO dto) {

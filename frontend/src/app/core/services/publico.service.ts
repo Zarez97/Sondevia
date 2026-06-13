@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { Pregunta } from './pregunta.service';
 
 export interface EncuestaPublica {
   idEncuesta: number;
@@ -32,6 +33,10 @@ export class PublicoService {
 
   cargarEncuesta(token: string): Observable<EncuestaPublica> {
     return this.http.get<EncuestaPublica>(`${this.api}/encuestas/${token}`);
+  }
+
+  cargarPreguntas(token: string): Observable<Pregunta[]> {
+    return this.http.get<Pregunta[]>(`${this.api}/encuestas/${token}/preguntas`);
   }
 
   participar(token: string, data: ParticipanteRequest): Observable<ParticipanteResponse> {

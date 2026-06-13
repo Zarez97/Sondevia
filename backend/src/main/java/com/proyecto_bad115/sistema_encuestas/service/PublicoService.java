@@ -3,6 +3,7 @@ package com.proyecto_bad115.sistema_encuestas.service;
 import com.proyecto_bad115.sistema_encuestas.dto.EncuestaPublicaDTO;
 import com.proyecto_bad115.sistema_encuestas.dto.ParticipanteRequestDTO;
 import com.proyecto_bad115.sistema_encuestas.dto.ParticipanteResponseDTO;
+import com.proyecto_bad115.sistema_encuestas.dto.PreguntaResponseDTO;
 import com.proyecto_bad115.sistema_encuestas.model.*;
 import com.proyecto_bad115.sistema_encuestas.repository.*;
 import jakarta.transaction.Transactional;
@@ -10,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
@@ -27,6 +29,7 @@ public class PublicoService {
     private final RolRepository rolRepository;
     private final UsuarioRolRepository usuarioRolRepository;
     private final RespuestaRepository respuestaRepository;
+    private final PreguntaService preguntaService;
     private final PasswordEncoder passwordEncoder;
 
     public PublicoService(EncuestaRepository encuestaRepository,
@@ -35,6 +38,7 @@ public class PublicoService {
                           RolRepository rolRepository,
                           UsuarioRolRepository usuarioRolRepository,
                           RespuestaRepository respuestaRepository,
+                          PreguntaService preguntaService,
                           PasswordEncoder passwordEncoder) {
         this.encuestaRepository = encuestaRepository;
         this.preguntaRepository = preguntaRepository;
@@ -42,12 +46,19 @@ public class PublicoService {
         this.rolRepository = rolRepository;
         this.usuarioRolRepository = usuarioRolRepository;
         this.respuestaRepository = respuestaRepository;
+        this.preguntaService = preguntaService;
         this.passwordEncoder = passwordEncoder;
     }
 
     /** Carga la encuesta vigente a partir del token (pantalla de bienvenida). */
     public EncuestaPublicaDTO cargarEncuesta(String token) {
         return toPublicaDTO(obtenerVigente(token));
+    }
+
+    /** CU12 - Carga las preguntas de la encuesta vigente para responderla. */
+    public List<PreguntaResponseDTO> cargarPreguntas(String token) {
+        Encuesta encuesta = obtenerVigente(token);
+        return preguntaService.listarPorEncuesta(encuesta.getIdEncuesta());
     }
 
     /** CU11 - Registra los datos personales del participante. */
