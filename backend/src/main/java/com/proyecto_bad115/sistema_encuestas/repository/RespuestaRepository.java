@@ -6,4 +6,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface RespuestaRepository extends JpaRepository<Respuesta, Integer> {
+
+    // CU11 - Detecta respuestas duplicadas: mismo correo en la misma encuesta
+    boolean existsByEncuestaIdEncuestaAndUsuarioEmailUser(Integer idEncuesta, String emailUser);
 }

@@ -8,6 +8,10 @@ export const routes: Routes = [
     loadComponent: () => import('./modules/auth/login/login.component').then(m => m.LoginComponent)
   },
   {
+    path: 'responder/:token',
+    loadComponent: () => import('./modules/responder/responder.component').then(m => m.ResponderComponent)
+  },
+  {
     path: 'dashboard',
     loadComponent: () => import('./modules/dashboard/dashboard.component').then(m => m.DashboardComponent),
     canActivate: [authGuard],
