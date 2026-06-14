@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { UsuarioService, Usuario, CrearUsuario, ActualizarUsuario } from '../../core/services/usuario.service';
 import { RolService, RolResponse } from '../../core/services/rol.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 
 @Component({
   selector: 'app-usuarios',
@@ -45,7 +46,8 @@ export class UsuariosComponent implements OnInit {
     private rolService: RolService,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private confirm: ConfirmService
   ) {
     this.form = this.fb.group({
       nombreUser: ['', Validators.required],
@@ -132,8 +134,14 @@ export class UsuariosComponent implements OnInit {
     });
   }
 
-  darDeBaja(id: number): void {
-    if (!confirm('¿Dar de baja a este usuario?')) return;
+  async darDeBaja(id: number): Promise<void> {
+    const ok = await this.confirm.ask({
+      title: 'Dar de baja usuario',
+      message: 'El usuario quedará inactivo y no podrá iniciar sesión. ¿Continuar?',
+      confirmText: 'Dar de baja',
+      variant: 'danger'
+    });
+    if (!ok) return;
     this.usuarioService.darDeBaja(id).subscribe({
       next: () => { this.mostrarExito('Usuario dado de baja.'); this.cargarUsuarios(); },
       error: () => this.mostrarError('Error al dar de baja.')

@@ -3,6 +3,7 @@ import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/rou
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
 import { MenuService, MenuItem } from '../../core/services/menu.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 
 const ICONOS: Record<string, string> = {
   'Gestionar Usuarios':    'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm8 4v6m3-3h-6',
@@ -49,7 +50,8 @@ export class DashboardComponent implements OnInit {
     private authService: AuthService,
     private menuService: MenuService,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private confirm: ConfirmService
   ) {
     this.user = this.authService.getUser();
   }
@@ -57,7 +59,7 @@ export class DashboardComponent implements OnInit {
   ngOnInit(): void {
     this.menuService.obtenerMenu().subscribe({
       next: (items) => { this.menuGrupos = this.agrupar(items); this.cdr.detectChanges(); },
-      error: () => this.logout()
+      error: () => this.cerrarSesion()
     });
   }
 
@@ -84,7 +86,18 @@ export class DashboardComponent implements OnInit {
     this.sidebarColapsado = !this.sidebarColapsado;
   }
 
-  logout(): void {
+  async logout(): Promise<void> {
+    const ok = await this.confirm.ask({
+      title: 'Cerrar sesión',
+      message: '¿Seguro que deseas cerrar tu sesión actual?',
+      confirmText: 'Cerrar sesión',
+      cancelText: 'Cancelar',
+      variant: 'primary'
+    });
+    if (ok) this.cerrarSesion();
+  }
+
+  private cerrarSesion(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
   }

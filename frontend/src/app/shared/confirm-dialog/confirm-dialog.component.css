@@ -1,0 +1,72 @@
+.cd-overlay {
+  position: fixed; inset: 0; z-index: 2000;
+  background: rgba(17, 24, 39, 0.55);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  animation: cd-fade 0.15s ease;
+}
+
+.cd-dialog {
+  background: #fff; border-radius: 16px;
+  width: 100%; max-width: 400px;
+  padding: 28px 26px 22px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  text-align: center;
+  animation: cd-pop 0.18s ease;
+}
+
+/* Icono */
+.cd-icon {
+  width: 56px; height: 56px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+}
+.cd-icon svg { width: 26px; height: 26px; }
+
+.cd-icon-danger  { background: #fef2f2; color: #dc2626; }
+.cd-icon-warning { background: #fffbeb; color: #d97706; }
+.cd-icon-primary { background: var(--brand-primary-light); color: var(--brand-primary); }
+.cd-icon-info    { background: #eff6ff; color: #2563eb; }
+
+/* Texto */
+.cd-title {
+  font-size: 1.15rem; font-weight: 700; color: #111827;
+  margin: 0 0 8px;
+}
+.cd-message {
+  font-size: 0.9rem; color: #6b7280; line-height: 1.55;
+  margin: 0 0 24px;
+}
+
+/* Botones */
+.cd-actions {
+  display: flex; gap: 10px; justify-content: center;
+}
+.cd-btn {
+  flex: 1; padding: 11px 18px; border-radius: 9px;
+  font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  border: none; transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.cd-cancel {
+  background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb;
+}
+.cd-cancel:hover { background: #e5e7eb; }
+
+.cd-confirm { color: #fff; }
+.cd-confirm-danger  { background: #dc2626; }
+.cd-confirm-danger:hover  { background: #b91c1c; }
+.cd-confirm-warning { background: #d97706; }
+.cd-confirm-warning:hover { background: #b45309; }
+.cd-confirm-primary { background: var(--brand-primary); }
+.cd-confirm-primary:hover { background: var(--brand-primary-hover); }
+.cd-confirm-info    { background: var(--brand-primary); }
+.cd-confirm-info:hover    { background: var(--brand-primary-hover); }
+
+@keyframes cd-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes cd-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}

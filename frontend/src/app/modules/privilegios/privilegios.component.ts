@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { PrivilegioService, PrivilegioResponseDTO } from '../../core/services/privilegio.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 
 @Component({
   selector: 'app-privilegios',
@@ -25,7 +26,8 @@ export class PrivilegiosComponent implements OnInit {
   constructor(
     private privilegioService: PrivilegioService,
     private fb: FormBuilder,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private confirm: ConfirmService
   ) {
     this.form = this.fb.group({
       nombrePrivilegio: ['', Validators.required],
@@ -78,8 +80,14 @@ export class PrivilegiosComponent implements OnInit {
     });
   }
 
-  eliminar(id: number): void {
-    if (!confirm('¿Eliminar este privilegio?')) return;
+  async eliminar(id: number): Promise<void> {
+    const ok = await this.confirm.ask({
+      title: 'Eliminar privilegio',
+      message: 'Se eliminará el privilegio y se quitará de los roles que lo tengan. ¿Continuar?',
+      confirmText: 'Eliminar',
+      variant: 'danger'
+    });
+    if (!ok) return;
     this.privilegioService.eliminar(id).subscribe({
       next: () => { this.mostrarExito('Privilegio eliminado.'); this.cargar(); },
       error: () => this.mostrarError('Error al eliminar.')

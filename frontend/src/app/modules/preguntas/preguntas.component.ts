@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } 
 import { ActivatedRoute, Router } from '@angular/router';
 import { PreguntaService, Pregunta, PreguntaRequest } from '../../core/services/pregunta.service';
 import { EncuestaService, Encuesta } from '../../core/services/encuesta.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 
 type TipoPrincipal = 'ABIERTA' | 'CERRADA';
 type TipoTexto = 'corta' | 'larga';
@@ -44,7 +45,8 @@ export class PreguntasComponent implements OnInit {
     private preguntaService: PreguntaService,
     private encuestaService: EncuestaService,
     private fb: FormBuilder,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private confirm: ConfirmService
   ) {
     this.form = this.fb.group({
       descripcionPregunta: ['', [Validators.required, Validators.maxLength(500)]],
@@ -228,11 +230,21 @@ export class PreguntasComponent implements OnInit {
     });
   }
 
-  eliminar(p: Pregunta): void {
-    if (!confirm(`¿Eliminar "${p.descripcionPregunta}"?`)) return;
+  async eliminar(p: Pregunta): Promise<void> {
+    const ok = await this.confirm.ask({
+      title: 'Eliminar pregunta',
+      message: `Se eliminará la pregunta "${p.descripcionPregunta}". ¿Continuar?`,
+      confirmText: 'Eliminar',
+      variant: 'danger'
+    });
+    if (!ok) return;
     this.preguntaService.eliminar(this.idEncuesta, p.idPregunta).subscribe({
       next: () => this.cargarPreguntas(),
-      error: (e) => alert(e.error?.mensaje || 'No se pudo eliminar.')
+      error: (e) => this.confirm.alert({
+        title: 'No se pudo eliminar',
+        message: e.error?.mensaje || 'Ocurrió un error al eliminar la pregunta.',
+        variant: 'danger'
+      })
     });
   }
 

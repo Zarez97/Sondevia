@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } 
 import { RolService, RolResponse } from '../../core/services/rol.service';
 import { PrivilegioService, PrivilegioResponseDTO } from '../../core/services/privilegio.service';
 import { UsuarioService, Usuario } from '../../core/services/usuario.service';
+import { ConfirmService } from '../../core/services/confirm.service';
 
 @Component({
   selector: 'app-roles',
@@ -39,7 +40,8 @@ export class RolesComponent implements OnInit {
     private privilegioService: PrivilegioService,
     private usuarioService: UsuarioService,
     private fb: FormBuilder,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private confirm: ConfirmService
   ) {
     this.formRol = this.fb.group({
       nombreRol: ['', Validators.required],
@@ -88,8 +90,14 @@ export class RolesComponent implements OnInit {
     });
   }
 
-  eliminarRol(id: number): void {
-    if (!confirm('¿Eliminar este rol?')) return;
+  async eliminarRol(id: number): Promise<void> {
+    const ok = await this.confirm.ask({
+      title: 'Eliminar rol',
+      message: 'Se eliminará el rol y sus asignaciones. ¿Continuar?',
+      confirmText: 'Eliminar',
+      variant: 'danger'
+    });
+    if (!ok) return;
     this.rolService.eliminar(id).subscribe({
       next: () => { this.mostrarExito('Rol eliminado.'); this.cargar(); },
       error: () => this.mostrarError('Error al eliminar.')
