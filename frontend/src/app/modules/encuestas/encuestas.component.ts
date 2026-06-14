@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { EncuestaService, Encuesta, EncuestaRequest } from '../../core/services/encuesta.service';
 import { PreguntaService, Pregunta } from '../../core/services/pregunta.service';
 import { ConfirmService } from '../../core/services/confirm.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-encuestas',
@@ -37,7 +38,8 @@ export class EncuestasComponent implements OnInit {
     private fb: FormBuilder,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private confirm: ConfirmService
+    private confirm: ConfirmService,
+    private toast: ToastService
   ) {
     this.form = this.fb.group({
       tituloEncuesta: ['', [Validators.required, Validators.maxLength(150)]],
@@ -169,10 +171,22 @@ export class EncuestasComponent implements OnInit {
 
   copiarEnlace(token: string | null): void {
     if (!token) return;
-    navigator.clipboard?.writeText(this.linkPublico(token));
-    this.copiado = true;
-    this.cdr.detectChanges();
-    setTimeout(() => { this.copiado = false; this.cdr.detectChanges(); }, 2000);
+    const link = this.linkPublico(token);
+
+    const ok = () => {
+      this.toast.show('Enlace copiado al portapapeles', 'success');
+      this.copiado = true;
+      this.cdr.detectChanges();
+      setTimeout(() => { this.copiado = false; this.cdr.detectChanges(); }, 2000);
+    };
+
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(link)
+        .then(ok)
+        .catch(() => this.toast.show('No se pudo copiar el enlace', 'error'));
+    } else {
+      ok();
+    }
   }
 
   get f() { return this.form.controls; }
