@@ -16,6 +16,23 @@ const ICONOS: Record<string, string> = {
 
 const ICONO_DEFAULT = 'M4 6h16M4 12h16M4 18h16';
 
+// Agrupación y orden lógico de las opciones del menú (por nombre de privilegio)
+const ORDEN: Record<string, { grupo: string; orden: number }> = {
+  'Gestionar Encuestas':   { grupo: 'Encuestas', orden: 1 },
+  'Ver Resultados':        { grupo: 'Encuestas', orden: 2 },
+  'Responder Encuestas':   { grupo: 'Encuestas', orden: 3 },
+  'Gestionar Usuarios':    { grupo: 'Administración', orden: 1 },
+  'Asignar Roles':         { grupo: 'Administración', orden: 2 },
+  'Gestionar Privilegios': { grupo: 'Administración', orden: 3 },
+  'Desbloquear Usuarios':  { grupo: 'Administración', orden: 4 },
+};
+const ORDEN_GRUPOS = ['Encuestas', 'Administración', 'General'];
+
+interface MenuGrupo {
+  titulo: string;
+  items: MenuItem[];
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -24,7 +41,7 @@ const ICONO_DEFAULT = 'M4 6h16M4 12h16M4 18h16';
   styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent implements OnInit {
-  menuItems: MenuItem[] = [];
+  menuGrupos: MenuGrupo[] = [];
   user: { nombre: string; email: string } | null = null;
   sidebarColapsado = false;
 
@@ -39,9 +56,24 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.menuService.obtenerMenu().subscribe({
-      next: (items) => { this.menuItems = items; this.cdr.detectChanges(); },
+      next: (items) => { this.menuGrupos = this.agrupar(items); this.cdr.detectChanges(); },
       error: () => this.logout()
     });
+  }
+
+  private agrupar(items: MenuItem[]): MenuGrupo[] {
+    const mapa = new Map<string, MenuItem[]>();
+    for (const item of items) {
+      const grupo = ORDEN[item.nombre]?.grupo ?? 'General';
+      if (!mapa.has(grupo)) mapa.set(grupo, []);
+      mapa.get(grupo)!.push(item);
+    }
+    for (const arr of mapa.values()) {
+      arr.sort((a, b) => (ORDEN[a.nombre]?.orden ?? 99) - (ORDEN[b.nombre]?.orden ?? 99));
+    }
+    return ORDEN_GRUPOS
+      .filter(g => mapa.has(g))
+      .map(g => ({ titulo: g, items: mapa.get(g)! }));
   }
 
   getIcono(nombre: string): string {

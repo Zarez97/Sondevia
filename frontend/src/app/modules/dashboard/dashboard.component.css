@@ -70,6 +70,32 @@
   overflow-y: auto;
 }
 
+.nav-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.nav-grupo + .nav-grupo {
+  margin-top: 14px;
+}
+
+.nav-grupo-titulo {
+  padding: 4px 10px 6px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: rgba(255, 255, 255, 0.4);
+  white-space: nowrap;
+}
+
+.nav-grupo-divisor {
+  display: block;
+  height: 1px;
+  margin: 6px 8px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
 .nav-item {
   display: flex;
   align-items: center;

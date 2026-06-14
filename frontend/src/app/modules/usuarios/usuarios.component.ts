@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { UsuarioService, Usuario, CrearUsuario, ActualizarUsuario } from '../../core/services/usuario.service';
 
 @Component({
@@ -27,7 +28,14 @@ export class UsuariosComponent implements OnInit {
   readonly INACTIVO = 0;
   readonly BLOQUEADO = 2;
 
-  constructor(private usuarioService: UsuarioService, private fb: FormBuilder, private cdr: ChangeDetectorRef) {
+  soloBloqueados = false;
+
+  constructor(
+    private usuarioService: UsuarioService,
+    private fb: FormBuilder,
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute
+  ) {
     this.form = this.fb.group({
       nombreUser: ['', Validators.required],
       emailUser: ['', [Validators.required, Validators.email]],
@@ -37,7 +45,14 @@ export class UsuariosComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.soloBloqueados = this.route.snapshot.routeConfig?.path === 'usuarios/bloqueados';
     this.cargarUsuarios();
+  }
+
+  get listaVisible(): Usuario[] {
+    return this.soloBloqueados
+      ? this.usuarios.filter(u => u.estadoUser === this.BLOQUEADO)
+      : this.usuarios;
   }
 
   cargarUsuarios(): void {

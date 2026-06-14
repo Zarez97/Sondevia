@@ -16,15 +16,24 @@
     </div>
 
     <nav class="sidebar-nav">
-      @for (item of menuItems; track item.url) {
-        <a [routerLink]="item.url" routerLinkActive="active" class="nav-item" [title]="item.nombre">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="nav-icon">
-            <path [attr.d]="getIcono(item.nombre)" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
+      @for (grupo of menuGrupos; track grupo.titulo) {
+        <div class="nav-grupo">
           @if (!sidebarColapsado) {
-            <span>{{ item.nombre }}</span>
+            <span class="nav-grupo-titulo">{{ grupo.titulo }}</span>
+          } @else {
+            <span class="nav-grupo-divisor"></span>
           }
-        </a>
+          @for (item of grupo.items; track item.url) {
+            <a [routerLink]="item.url" routerLinkActive="active" class="nav-item" [title]="item.nombre">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="nav-icon">
+                <path [attr.d]="getIcono(item.nombre)" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              @if (!sidebarColapsado) {
+                <span>{{ item.nombre }}</span>
+              }
+            </a>
+          }
+        </div>
       }
     </nav>
 

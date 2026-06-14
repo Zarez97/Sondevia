@@ -2,10 +2,14 @@
 
   <div class="page-header">
     <div>
-      <h2 class="page-title">Gestión de Usuarios</h2>
-      <p class="page-subtitle">Administra las cuentas de usuario del sistema</p>
+      <h2 class="page-title">{{ soloBloqueados ? 'Usuarios Bloqueados' : 'Gestión de Usuarios' }}</h2>
+      <p class="page-subtitle">
+        {{ soloBloqueados ? 'Reactiva las cuentas bloqueadas por intentos fallidos' : 'Administra las cuentas de usuario del sistema' }}
+      </p>
     </div>
-    <button class="btn-primary" (click)="abrirCrear()">+ Nuevo usuario</button>
+    @if (!soloBloqueados) {
+      <button class="btn-primary" (click)="abrirCrear()">+ Nuevo usuario</button>
+    }
   </div>
 
   @if (exito) {
@@ -18,8 +22,8 @@
   <div class="card">
     @if (cargando) {
       <div class="empty-state">Cargando usuarios...</div>
-    } @else if (usuarios.length === 0) {
-      <div class="empty-state">No hay usuarios registrados.</div>
+    } @else if (listaVisible.length === 0) {
+      <div class="empty-state">{{ soloBloqueados ? 'No hay usuarios bloqueados.' : 'No hay usuarios registrados.' }}</div>
     } @else {
       <table class="tabla">
         <thead>
@@ -34,7 +38,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (u of usuarios; track u.idUser) {
+          @for (u of listaVisible; track u.idUser) {
             <tr>
               <td>{{ u.idUser }}</td>
               <td>{{ u.nombreUser }}</td>

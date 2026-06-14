@@ -1,0 +1,44 @@
+.page { padding: 32px; }
+
+.page-header { margin-bottom: 28px; }
+.page-title { font-size: 1.4rem; font-weight: 700; color: #111827; margin-bottom: 4px; }
+.page-subtitle { font-size: 0.875rem; color: #6b7280; }
+
+.alert-error {
+  background: #fef2f2; border: 1px solid #fecaca;
+  color: #dc2626; padding: 10px 14px; border-radius: 8px;
+  margin-bottom: 16px; font-size: 0.875rem;
+}
+.empty-state { text-align: center; padding: 60px 20px; color: #9ca3af; display: flex; flex-direction: column; gap: 6px; }
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.encuesta-card {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+  padding: 20px; display: flex; flex-direction: column; gap: 10px;
+  cursor: pointer; transition: box-shadow 0.2s, border-color 0.2s;
+}
+.encuesta-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-color: var(--brand-primary-border); }
+
+.card-header { display: flex; justify-content: space-between; align-items: center; }
+.badge { padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+.badge-publicada { background: #f0fdf4; color: #16a34a; }
+.badge-cerrada { background: #f9fafb; color: #6b7280; }
+.card-preguntas { font-size: 0.78rem; color: #9ca3af; }
+
+.card-title {
+  font-size: 1rem; font-weight: 700; color: #111827;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.card-meta { font-size: 0.8rem; color: #6b7280; }
+
+.card-footer { margin-top: auto; padding-top: 8px; }
+.ver-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.85rem; font-weight: 600; color: var(--brand-primary);
+}
+.ver-link svg { width: 15px; height: 15px; }
