@@ -3,6 +3,7 @@ package com.proyecto_bad115.sistema_encuestas.controller;
 import com.proyecto_bad115.sistema_encuestas.dto.LoginRequestDTO;
 import com.proyecto_bad115.sistema_encuestas.dto.LoginResponseDTO;
 import com.proyecto_bad115.sistema_encuestas.dto.MenuItemDTO;
+import com.proyecto_bad115.sistema_encuestas.dto.RegistroRequestDTO;
 import com.proyecto_bad115.sistema_encuestas.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -40,6 +41,15 @@ public class AuthController {
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("mensaje", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/registro")
+    public ResponseEntity<?> registro(@Valid @RequestBody RegistroRequestDTO request) {
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED).body(authService.registrar(request));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("mensaje", e.getMessage()));
         }
     }
 

@@ -8,6 +8,10 @@ export const routes: Routes = [
     loadComponent: () => import('./modules/auth/login/login.component').then(m => m.LoginComponent)
   },
   {
+    path: 'registro',
+    loadComponent: () => import('./modules/auth/register/register.component').then(m => m.RegisterComponent)
+  },
+  {
     path: 'responder/:token',
     loadComponent: () => import('./modules/responder/responder.component').then(m => m.ResponderComponent)
   },

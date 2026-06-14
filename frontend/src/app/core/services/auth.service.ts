@@ -7,10 +7,18 @@ export interface LoginRequest {
   contrasenia: string;
 }
 
+export interface RegisterRequest {
+  nombre: string;
+  email: string;
+  contrasenia: string;
+  fechaNacimiento: string;
+}
+
 export interface LoginResponse {
   token: string;
   nombreUser: string;
   emailUser: string;
+  roles: string[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -23,14 +31,23 @@ export class AuthService {
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.API}/login`, credentials).pipe(
-      tap(response => {
-        localStorage.setItem(this.TOKEN_KEY, response.token);
-        localStorage.setItem(this.USER_KEY, JSON.stringify({
-          nombre: response.nombreUser,
-          email: response.emailUser
-        }));
-      })
+      tap(response => this.guardarSesion(response))
     );
+  }
+
+  registrar(data: RegisterRequest): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.API}/registro`, data).pipe(
+      tap(response => this.guardarSesion(response))
+    );
+  }
+
+  private guardarSesion(response: LoginResponse): void {
+    localStorage.setItem(this.TOKEN_KEY, response.token);
+    localStorage.setItem(this.USER_KEY, JSON.stringify({
+      nombre: response.nombreUser,
+      email: response.emailUser,
+      roles: response.roles ?? []
+    }));
   }
 
   logout(): void {
@@ -46,8 +63,16 @@ export class AuthService {
     return localStorage.getItem(this.TOKEN_KEY);
   }
 
-  getUser(): { nombre: string; email: string } | null {
+  getUser(): { nombre: string; email: string; roles: string[] } | null {
     const user = localStorage.getItem(this.USER_KEY);
     return user ? JSON.parse(user) : null;
+  }
+
+  getRoles(): string[] {
+    return this.getUser()?.roles ?? [];
+  }
+
+  tieneRol(rol: string): boolean {
+    return this.getRoles().includes(rol);
   }
 }

@@ -38,6 +38,7 @@ public class DataInitializer implements CommandLineRunner {
         crearRoles();
         crearPrivilegios();
         asignarPrivilegiosAdministrador();
+        asignarPrivilegiosEncuestado();
         crearUsuarioAdmin();
     }
 
@@ -64,6 +65,7 @@ public class DataInitializer implements CommandLineRunner {
             new String[]{"Desbloquear Usuarios", "Reactivar cuentas bloqueadas", "/dashboard/usuarios/bloqueados"},
             new String[]{"Gestionar Encuestas", "Crear, editar y eliminar encuestas", "/dashboard/encuestas"},
             new String[]{"Responder Encuestas", "Ver y responder encuestas disponibles", "/dashboard/responder"},
+            new String[]{"Mis Encuestas", "Encuestas en progreso y respondidas del encuestado", "/dashboard/mis-encuestas"},
             new String[]{"Ver Resultados", "Consultar resultados de encuestas", "/dashboard/resultados"}
         ).forEach(p -> {
             if (!privilegioRepository.existsByNombrePrivilegio(p[0])) {
@@ -95,6 +97,21 @@ public class DataInitializer implements CommandLineRunner {
                 })
             );
         });
+    }
+
+    private void asignarPrivilegiosEncuestado() {
+        rolRepository.findByNombreRol("ENCUESTADO").ifPresent(encuestado ->
+            privilegioRepository.findByNombrePrivilegio("Mis Encuestas").ifPresent(priv -> {
+                boolean yaAsignado = rolPrivilegioRepository.findByRolIdRol(encuestado.getIdRol())
+                        .stream().anyMatch(rp -> rp.getPrivilegio().getIdPrivilegio().equals(priv.getIdPrivilegio()));
+                if (!yaAsignado) {
+                    RolPrivilegio rp = new RolPrivilegio();
+                    rp.setRol(encuestado);
+                    rp.setPrivilegio(priv);
+                    rolPrivilegioRepository.save(rp);
+                }
+            })
+        );
     }
 
     private void crearUsuarioAdmin() {

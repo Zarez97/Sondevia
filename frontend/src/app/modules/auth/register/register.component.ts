@@ -1,22 +1,23 @@
 import { Component, ChangeDetectorRef } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-register',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
-  templateUrl: './login.component.html',
-  styleUrl: './login.component.css'
+  templateUrl: './register.component.html',
+  styleUrl: '../login/login.component.css'
 })
-export class LoginComponent {
+export class RegisterComponent {
   form: FormGroup;
   loading = false;
   errorMessage = '';
   showPassword = false;
   redirectUrl: string | null = null;
+  readonly hoy = new Date().toISOString().split('T')[0];
 
   togglePassword(): void { this.showPassword = !this.showPassword; }
 
@@ -29,12 +30,22 @@ export class LoginComponent {
   ) {
     this.redirectUrl = this.route.snapshot.queryParamMap.get('redirect');
     this.form = this.fb.group({
+      nombre: ['', [Validators.required, Validators.maxLength(128)]],
       email: ['', [Validators.required, Validators.email]],
-      contrasenia: ['', Validators.required]
-    });
+      contrasenia: ['', [Validators.required, Validators.minLength(8)]],
+      confirmar: ['', Validators.required],
+      fechaNacimiento: ['', Validators.required]
+    }, { validators: RegisterComponent.passwordsIguales });
   }
 
-  get registroQueryParams() {
+  static passwordsIguales(group: AbstractControl): ValidationErrors | null {
+    const pass = group.get('contrasenia')?.value;
+    const conf = group.get('confirmar')?.value;
+    return pass && conf && pass !== conf ? { noCoincide: true } : null;
+  }
+
+  get f() { return this.form.controls; }
+  get loginQueryParams() {
     return this.redirectUrl ? { redirect: this.redirectUrl } : {};
   }
 
@@ -44,10 +55,11 @@ export class LoginComponent {
     this.loading = true;
     this.errorMessage = '';
 
-    this.authService.login(this.form.value).subscribe({
+    const { nombre, email, contrasenia, fechaNacimiento } = this.form.value;
+    this.authService.registrar({ nombre, email, contrasenia, fechaNacimiento }).subscribe({
       next: () => this.router.navigateByUrl(this.redirectUrl || '/dashboard'),
       error: (e) => {
-        this.errorMessage = e.error?.mensaje || 'Correo o contraseña incorrectos.';
+        this.errorMessage = e.error?.mensaje || 'No se pudo completar el registro.';
         this.loading = false;
         this.cdr.detectChanges();
       }
