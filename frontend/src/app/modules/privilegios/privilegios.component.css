@@ -11,9 +11,17 @@
 .tabla tr:last-child td { border-bottom: none; }
 .tabla tr:hover td { background: #f9fafb; }
 
-.acciones { display: flex; gap: 4px; }
-.btn-icon { background: none; border: none; cursor: pointer; font-size: 1rem; padding: 4px 6px; border-radius: 6px; transition: background 0.15s; }
-.btn-icon:hover { background: #f3f4f6; }
+.acciones { display: flex; gap: 6px; align-items: center; }
+.btn-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; padding: 0;
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+  color: #6b7280; cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.btn-icon:hover { background: #f9fafb; color: #374151; border-color: #d1d5db; }
+.btn-icon svg { width: 16px; height: 16px; }
+.btn-icon.danger:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
 
 .badge-nombre { background: #fdf4ff; color: #7e22ce; padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
 .url-badge { background: #f3f4f6; color: #374151; padding: 2px 8px; border-radius: 6px; font-size: 0.78rem; font-family: monospace; }
@@ -23,8 +31,8 @@
 .alert-error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
 .empty-state { padding: 48px; text-align: center; color: #9ca3af; }
 
-.btn-primary { padding: 9px 20px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
-.btn-primary:hover:not(:disabled) { background: #4338ca; }
+.btn-primary { padding: 9px 20px; background: var(--brand-primary); color: #fff; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
+.btn-primary:hover:not(:disabled) { background: var(--brand-primary-hover); }
 .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn-secondary { padding: 9px 20px; background: #f3f4f6; color: #374151; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
 .btn-secondary:hover { background: #e5e7eb; }
@@ -41,5 +49,5 @@
 .field-group { display: flex; flex-direction: column; gap: 5px; }
 .field-group label { font-size: 0.85rem; font-weight: 500; color: #374151; }
 .field-group input { padding: 9px 12px; border: 1.5px solid #e5e7eb; border-radius: 7px; font-size: 0.9rem; color: #111827; outline: none; transition: border-color 0.2s; }
-.field-group input:focus { border-color: #4f46e5; }
+.field-group input:focus { border-color: var(--brand-primary); }
 .field-error { font-size: 0.78rem; color: #ef4444; }
