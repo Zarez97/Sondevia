@@ -43,6 +43,10 @@ export class ResponderComponent implements OnInit {
   confirmando = false;
   confirmacion: RespuestaConfirmacion | null = null;
 
+  // Etapa 17 - Borrador ("Terminar más tarde")
+  tieneBorrador = false;
+  guardandoBorrador = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -86,6 +90,7 @@ export class ResponderComponent implements OnInit {
           this.paso = 'yaRespondido';
           this.cdr.detectChanges();
         } else {
+          this.tieneBorrador = res.tieneBorrador;
           this.cargarPreguntas();
         }
       },
@@ -108,12 +113,41 @@ export class ResponderComponent implements OnInit {
         this.preguntas.forEach(p => this.initRespuesta(p));
         this.indiceActual = 0;
         this.enviando = false;
-        this.paso = 'preguntas';
-        this.cdr.detectChanges();
+        if (this.tieneBorrador) {
+          this.precargarBorrador();
+        } else {
+          this.paso = 'preguntas';
+          this.cdr.detectChanges();
+        }
       },
       error: (err) => {
         this.enviando = false;
         this.errorForm = err.error?.mensaje || 'No se pudieron cargar las preguntas.';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  // Etapa 17 - Reanuda el borrador guardado precargando las respuestas
+  private precargarBorrador(): void {
+    this.publicoService.obtenerBorrador(this.token).subscribe({
+      next: (detalles) => {
+        for (const d of detalles) {
+          const r = this.respuestas[d.idPregunta];
+          if (!r) continue;
+          r.texto = d.texto ?? '';
+          r.idOpcion = d.idOpcion ?? null;
+          r.idOpciones = d.idOpciones ?? [];
+          r.valor = d.valor ?? null;
+          if (d.ranking && d.ranking.length) r.ranking = d.ranking;
+          r.otrosTexto = d.otrosTexto ?? '';
+        }
+        this.paso = 'preguntas';
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        // Si falla la precarga, se inicia en blanco
+        this.paso = 'preguntas';
         this.cdr.detectChanges();
       }
     });
@@ -312,13 +346,8 @@ export class ResponderComponent implements OnInit {
     this.confirmando = false;
   }
 
-  confirmarEnvio(): void {
-    if (this.enviando) return;
-    this.confirmando = false;
-    this.enviando = true;
-    this.errorForm = '';
-
-    const respuestas = this.preguntas.map(p => {
+  private construirRespuestas() {
+    return this.preguntas.map(p => {
       const r = this.resp(p);
       return {
         idPregunta: p.idPregunta,
@@ -330,8 +359,33 @@ export class ResponderComponent implements OnInit {
         otrosTexto: r.otrosTexto
       };
     });
+  }
 
-    this.publicoService.enviar(this.token, respuestas).subscribe({
+  // Etapa 17 - Guarda el progreso parcial y vuelve al inicio ("Terminar más tarde")
+  terminarMasTarde(): void {
+    if (this.guardandoBorrador) return;
+    this.guardandoBorrador = true;
+    this.errorPregunta = '';
+    this.publicoService.guardarBorrador(this.token, this.construirRespuestas()).subscribe({
+      next: () => {
+        this.guardandoBorrador = false;
+        this.router.navigateByUrl('/dashboard');
+      },
+      error: (err) => {
+        this.guardandoBorrador = false;
+        this.errorPregunta = err.error?.mensaje || 'No se pudo guardar tu progreso.';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  confirmarEnvio(): void {
+    if (this.enviando) return;
+    this.confirmando = false;
+    this.enviando = true;
+    this.errorForm = '';
+
+    this.publicoService.enviar(this.token, this.construirRespuestas()).subscribe({
       next: (res) => {
         this.confirmacion = res;
         this.enviando = false;

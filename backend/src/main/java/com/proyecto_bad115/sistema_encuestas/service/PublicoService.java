@@ -7,10 +7,13 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.TreeMap;
 
 /**
  * Flujo de respuesta del encuestado. La bienvenida y las preguntas se cargan
@@ -54,11 +57,58 @@ public class PublicoService {
         return preguntaService.listarPorEncuesta(encuesta.getIdEncuesta());
     }
 
-    /** Indica si el encuestado autenticado ya respondió esta encuesta. */
+    /** Indica si el encuestado autenticado ya ENVIÓ esta encuesta. */
     public boolean yaRespondio(String token, String email) {
         Encuesta encuesta = obtenerVigente(token);
-        return respuestaRepository.existsByEncuestaIdEncuestaAndUsuarioEmailUser(
-                encuesta.getIdEncuesta(), normalizar(email));
+        return respuestaRepository.existsByEncuestaIdEncuestaAndUsuarioEmailUserAndEstadoRespuesta(
+                encuesta.getIdEncuesta(), normalizar(email), EstadoRespuesta.ENVIADA);
+    }
+
+    /** Indica si el encuestado tiene un borrador guardado para reanudar. */
+    public boolean tieneBorrador(String token, String email) {
+        Encuesta encuesta = obtenerVigente(token);
+        return respuestaRepository.findFirstByEncuestaIdEncuestaAndUsuarioEmailUserAndEstadoRespuesta(
+                encuesta.getIdEncuesta(), normalizar(email), EstadoRespuesta.BORRADOR).isPresent();
+    }
+
+    /** Etapa 17 - Devuelve las respuestas guardadas en el borrador (para reanudar). */
+    public List<DetalleEnvioDTO> obtenerBorrador(String token, String email) {
+        Encuesta encuesta = obtenerVigente(token);
+        return respuestaRepository.findFirstByEncuestaIdEncuestaAndUsuarioEmailUserAndEstadoRespuesta(
+                        encuesta.getIdEncuesta(), normalizar(email), EstadoRespuesta.BORRADOR)
+                .map(b -> reconstruir(detalleRespuestaRepository.findByRespuestaIdRespuesta(b.getIdRespuesta())))
+                .orElseGet(ArrayList::new);
+    }
+
+    /** Etapa 17 - Guarda (o actualiza) el progreso parcial como borrador ("terminar más tarde"). */
+    @Transactional
+    public void guardarBorrador(String token, String email, List<DetalleEnvioDTO> respuestas) {
+        Encuesta encuesta = obtenerVigente(token);
+        String correo = normalizar(email);
+        Usuario usuario = usuarioRepository.findByEmailUser(correo)
+                .orElseThrow(() -> new IllegalArgumentException("Tu sesión no es válida. Vuelve a iniciar sesión."));
+
+        if (respuestaRepository.existsByEncuestaIdEncuestaAndUsuarioEmailUserAndEstadoRespuesta(
+                encuesta.getIdEncuesta(), correo, EstadoRespuesta.ENVIADA)) {
+            throw new IllegalStateException("Ya enviaste esta encuesta; no puedes guardar un borrador");
+        }
+
+        Respuesta borrador = respuestaRepository
+                .findFirstByEncuestaIdEncuestaAndUsuarioEmailUserAndEstadoRespuesta(
+                        encuesta.getIdEncuesta(), correo, EstadoRespuesta.BORRADOR)
+                .orElseGet(() -> {
+                    Respuesta r = new Respuesta();
+                    r.setUsuario(usuario);
+                    r.setEncuesta(encuesta);
+                    r.setEstadoRespuesta(EstadoRespuesta.BORRADOR);
+                    return r;
+                });
+        borrador.setFechaActualizacion(LocalDate.now());
+        Respuesta guardada = respuestaRepository.save(borrador);
+
+        // Reemplaza los detalles previos del borrador
+        detalleRespuestaRepository.deleteByRespuestaIdRespuesta(guardada.getIdRespuesta());
+        guardarTodos(encuesta, respuestas, guardada);
     }
 
     /** CU13 - Registra de forma definitiva todas las respuestas del encuestado autenticado. */
@@ -70,17 +120,13 @@ public class PublicoService {
         Usuario usuario = usuarioRepository.findByEmailUser(correo)
                 .orElseThrow(() -> new IllegalArgumentException("Tu sesión no es válida. Vuelve a iniciar sesión."));
 
-        if (respuestaRepository.existsByEncuestaIdEncuestaAndUsuarioEmailUser(encuesta.getIdEncuesta(), correo)) {
+        if (respuestaRepository.existsByEncuestaIdEncuestaAndUsuarioEmailUserAndEstadoRespuesta(
+                encuesta.getIdEncuesta(), correo, EstadoRespuesta.ENVIADA)) {
             throw new IllegalStateException("Ya enviaste tus respuestas para esta encuesta");
         }
 
         List<Pregunta> preguntas = preguntaRepository.findByEncuestaIdEncuesta(encuesta.getIdEncuesta());
-        Map<Integer, DetalleEnvioDTO> mapa = new HashMap<>();
-        if (respuestas != null) {
-            for (DetalleEnvioDTO d : respuestas) {
-                if (d.getIdPregunta() != null) mapa.put(d.getIdPregunta(), d);
-            }
-        }
+        Map<Integer, DetalleEnvioDTO> mapa = indexar(respuestas);
 
         // Validación final: todas las preguntas obligatorias deben estar respondidas
         for (Pregunta p : preguntas) {
@@ -89,18 +135,77 @@ public class PublicoService {
             }
         }
 
-        Respuesta respuesta = new Respuesta();
-        respuesta.setFechaRespuesta(LocalDate.now());
+        // Reutiliza el borrador si existe (lo convierte en ENVIADA); si no, crea uno nuevo
+        Respuesta respuesta = respuestaRepository
+                .findFirstByEncuestaIdEncuestaAndUsuarioEmailUserAndEstadoRespuesta(
+                        encuesta.getIdEncuesta(), correo, EstadoRespuesta.BORRADOR)
+                .orElseGet(Respuesta::new);
         respuesta.setUsuario(usuario);
         respuesta.setEncuesta(encuesta);
+        respuesta.setEstadoRespuesta(EstadoRespuesta.ENVIADA);
+        respuesta.setFechaRespuesta(LocalDate.now());
+        respuesta.setFechaActualizacion(LocalDate.now());
         Respuesta guardada = respuestaRepository.save(respuesta);
 
-        for (Pregunta p : preguntas) {
-            DetalleEnvioDTO d = mapa.get(p.getIdPregunta());
-            if (d != null) guardarDetalles(p, d, guardada);
-        }
+        // Si venía de un borrador, limpia sus detalles previos antes de re-guardar
+        detalleRespuestaRepository.deleteByRespuestaIdRespuesta(guardada.getIdRespuesta());
+        guardarTodos(encuesta, respuestas, guardada);
 
         return new RespuestaConfirmacionDTO(guardada.getIdRespuesta(), guardada.getFechaRespuesta());
+    }
+
+    private void guardarTodos(Encuesta encuesta, List<DetalleEnvioDTO> respuestas, Respuesta destino) {
+        Map<Integer, DetalleEnvioDTO> mapa = indexar(respuestas);
+        for (Pregunta p : preguntaRepository.findByEncuestaIdEncuesta(encuesta.getIdEncuesta())) {
+            DetalleEnvioDTO d = mapa.get(p.getIdPregunta());
+            if (d != null) guardarDetalles(p, d, destino);
+        }
+    }
+
+    private Map<Integer, DetalleEnvioDTO> indexar(List<DetalleEnvioDTO> respuestas) {
+        Map<Integer, DetalleEnvioDTO> mapa = new HashMap<>();
+        if (respuestas != null) {
+            for (DetalleEnvioDTO d : respuestas) {
+                if (d.getIdPregunta() != null) mapa.put(d.getIdPregunta(), d);
+            }
+        }
+        return mapa;
+    }
+
+    /** Reconstruye los DetalleEnvioDTO (formato del cliente) a partir de los detalles guardados. */
+    private List<DetalleEnvioDTO> reconstruir(List<DetalleRespuesta> detalles) {
+        Map<Integer, DetalleEnvioDTO> mapa = new LinkedHashMap<>();
+        Map<Integer, TreeMap<Integer, Integer>> rankings = new HashMap<>(); // idPregunta -> (posición -> idOpcion)
+
+        for (DetalleRespuesta d : detalles) {
+            int idPreg = d.getPregunta().getIdPregunta();
+            DetalleEnvioDTO dto = mapa.computeIfAbsent(idPreg, k -> {
+                DetalleEnvioDTO x = new DetalleEnvioDTO();
+                x.setIdPregunta(k);
+                x.setIdOpciones(new ArrayList<>());
+                x.setRanking(new ArrayList<>());
+                return x;
+            });
+
+            OpcionRespuesta op = d.getOpcionRespuesta();
+            if (op == null) {
+                if (d.getValorRespuesta() != null) dto.setValor(d.getValorRespuesta());      // escala
+                else if (d.getTextoRespuesta() != null) dto.setTexto(d.getTextoRespuesta()); // abierta
+            } else if (d.getValorRespuesta() != null) {
+                // ranking: la posición es el valorRespuesta
+                rankings.computeIfAbsent(idPreg, k -> new TreeMap<>())
+                        .put(d.getValorRespuesta(), op.getIdOpcionRespuesta());
+            } else {
+                // selección única o múltiple
+                dto.getIdOpciones().add(op.getIdOpcionRespuesta());
+                if (dto.getIdOpcion() == null) dto.setIdOpcion(op.getIdOpcionRespuesta());
+                if (Boolean.TRUE.equals(op.getEsMixta()) && d.getTextoRespuesta() != null) {
+                    dto.setOtrosTexto(d.getTextoRespuesta());
+                }
+            }
+        }
+        rankings.forEach((idPreg, posMap) -> mapa.get(idPreg).setRanking(new ArrayList<>(posMap.values())));
+        return new ArrayList<>(mapa.values());
     }
 
     // ── Helpers ──────────────────────────────────────────────

@@ -47,7 +47,8 @@ public class ResultadoService {
         dto.setTituloEncuesta(encuesta.getTituloEncuesta());
         dto.setEstadoEncuesta(encuesta.getEstadoEncuesta());
         dto.setEstadoNombre(nombreEstado(encuesta.getEstadoEncuesta()));
-        dto.setTotalRespuestas(respuestaRepository.countByEncuestaIdEncuesta(idEncuesta));
+        dto.setTotalRespuestas(respuestaRepository.countByEncuestaIdEncuestaAndEstadoRespuesta(
+                idEncuesta, EstadoRespuesta.ENVIADA));
 
         long maxGlobal = 0;
         String masSeleccionada = null;
@@ -78,7 +79,8 @@ public class ResultadoService {
         rp.setEsMixta(p.getEsMixta());
         rp.setGraficoSugerido(sugerir(p));
 
-        List<DetalleRespuesta> detalles = detalleRespuestaRepository.findByPreguntaIdPregunta(p.getIdPregunta());
+        List<DetalleRespuesta> detalles = detalleRespuestaRepository
+                .findByPreguntaIdPreguntaAndRespuestaEstadoRespuesta(p.getIdPregunta(), EstadoRespuesta.ENVIADA);
 
         Set<Integer> respondentes = new HashSet<>();
         for (DetalleRespuesta d : detalles) respondentes.add(d.getRespuesta().getIdRespuesta());

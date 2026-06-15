@@ -179,6 +179,13 @@
           {{ esUltima ? 'Revisar respuestas' : 'Siguiente →' }}
         </button>
       </div>
+
+      <div class="terminar-tarde-wrap">
+        <button type="button" class="btn-terminar-tarde" (click)="terminarMasTarde()" [disabled]="guardandoBorrador">
+          @if (guardandoBorrador) { Guardando progreso... }
+          @else { Terminar más tarde }
+        </button>
+      </div>
     }
 
     @if (paso === 'resumen') {
@@ -208,6 +215,13 @@
         <button type="button" class="btn-nav-pri" (click)="enviar()" [disabled]="enviando">
           @if (enviando) { <span class="spinner"></span> Enviando... }
           @else { Enviar respuestas }
+        </button>
+      </div>
+
+      <div class="terminar-tarde-wrap">
+        <button type="button" class="btn-terminar-tarde" (click)="terminarMasTarde()" [disabled]="guardandoBorrador">
+          @if (guardandoBorrador) { Guardando progreso... }
+          @else { Terminar más tarde }
         </button>
       </div>
     }

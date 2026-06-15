@@ -30,6 +30,7 @@ export interface RespuestaConfirmacion {
 
 export interface EstadoRespuesta {
   yaRespondido: boolean;
+  tieneBorrador: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -55,5 +56,13 @@ export class PublicoService {
 
   enviar(token: string, respuestas: DetalleEnvio[]): Observable<RespuestaConfirmacion> {
     return this.http.post<RespuestaConfirmacion>(`${this.responderApi}/${token}`, { respuestas });
+  }
+
+  obtenerBorrador(token: string): Observable<DetalleEnvio[]> {
+    return this.http.get<DetalleEnvio[]>(`${this.responderApi}/${token}/borrador`);
+  }
+
+  guardarBorrador(token: string, respuestas: DetalleEnvio[]): Observable<{ mensaje: string }> {
+    return this.http.post<{ mensaje: string }>(`${this.responderApi}/${token}/borrador`, { respuestas });
   }
 }

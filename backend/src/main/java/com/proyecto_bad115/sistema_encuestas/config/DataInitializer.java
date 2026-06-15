@@ -17,6 +17,7 @@ public class DataInitializer implements CommandLineRunner {
     private final PrivilegioRepository privilegioRepository;
     private final RolPrivilegioRepository rolPrivilegioRepository;
     private final UsuarioRolRepository usuarioRolRepository;
+    private final RespuestaRepository respuestaRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataInitializer(UsuarioRepository usuarioRepository,
@@ -24,12 +25,14 @@ public class DataInitializer implements CommandLineRunner {
                            PrivilegioRepository privilegioRepository,
                            RolPrivilegioRepository rolPrivilegioRepository,
                            UsuarioRolRepository usuarioRolRepository,
+                           RespuestaRepository respuestaRepository,
                            PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.rolRepository = rolRepository;
         this.privilegioRepository = privilegioRepository;
         this.rolPrivilegioRepository = rolPrivilegioRepository;
         this.usuarioRolRepository = usuarioRolRepository;
+        this.respuestaRepository = respuestaRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -40,6 +43,17 @@ public class DataInitializer implements CommandLineRunner {
         asignarPrivilegiosAdministrador();
         asignarPrivilegiosEncuestado();
         crearUsuarioAdmin();
+        migrarRespuestasLegacy();
+    }
+
+    // Etapa 17 - Respuestas creadas antes de los borradores se marcan como ENVIADAS
+    private void migrarRespuestasLegacy() {
+        List<Respuesta> sinEstado = respuestaRepository.findByEstadoRespuestaIsNull();
+        if (!sinEstado.isEmpty()) {
+            sinEstado.forEach(r -> r.setEstadoRespuesta(EstadoRespuesta.ENVIADA));
+            respuestaRepository.saveAll(sinEstado);
+            System.out.println(">>> Migradas " + sinEstado.size() + " respuestas previas a estado ENVIADA");
+        }
     }
 
     private void crearRoles() {

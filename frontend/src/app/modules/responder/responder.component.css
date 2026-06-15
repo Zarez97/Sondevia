@@ -133,6 +133,17 @@
 }
 .btn-comenzar-sec:hover { background: var(--brand-primary-light); }
 
+/* Terminar más tarde (guardar borrador) */
+.terminar-tarde-wrap { text-align: center; margin-top: 14px; }
+.btn-terminar-tarde {
+  background: none; border: none; cursor: pointer;
+  color: #6b7280; font-size: 0.875rem; font-weight: 600;
+  padding: 6px 10px; border-radius: 6px; text-decoration: underline;
+  transition: color 0.15s;
+}
+.btn-terminar-tarde:hover:not(:disabled) { color: var(--brand-primary); }
+.btn-terminar-tarde:disabled { opacity: 0.6; cursor: not-allowed; }
+
 /* Estados centrados (cargando / error / ok) */
 .estado-centro {
   text-align: center;

@@ -4,12 +4,26 @@ import com.proyecto_bad115.sistema_encuestas.model.Respuesta;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+import java.util.Optional;
+
 @Repository
 public interface RespuestaRepository extends JpaRepository<Respuesta, Integer> {
 
-    // CU11 - Detecta respuestas duplicadas: mismo correo en la misma encuesta
-    boolean existsByEncuestaIdEncuestaAndUsuarioEmailUser(Integer idEncuesta, String emailUser);
+    // Control de duplicados: el usuario ya ENVIÓ una respuesta en esta encuesta
+    boolean existsByEncuestaIdEncuestaAndUsuarioEmailUserAndEstadoRespuesta(
+            Integer idEncuesta, String emailUser, Integer estadoRespuesta);
 
-    // CU09 - Total de respuestas registradas en una encuesta
-    long countByEncuestaIdEncuesta(Integer idEncuesta);
+    // Respuesta del usuario en una encuesta según estado (borrador o enviada)
+    Optional<Respuesta> findFirstByEncuestaIdEncuestaAndUsuarioEmailUserAndEstadoRespuesta(
+            Integer idEncuesta, String emailUser, Integer estadoRespuesta);
+
+    // CU09 - Total de respuestas ENVIADAS de una encuesta
+    long countByEncuestaIdEncuestaAndEstadoRespuesta(Integer idEncuesta, Integer estadoRespuesta);
+
+    // Etapa 18 - Respuestas del encuestado según estado (panel "Mis Encuestas")
+    List<Respuesta> findByUsuarioEmailUserAndEstadoRespuesta(String emailUser, Integer estadoRespuesta);
+
+    // Migración: respuestas previas sin estado (se tratan como ENVIADAS)
+    List<Respuesta> findByEstadoRespuestaIsNull();
 }

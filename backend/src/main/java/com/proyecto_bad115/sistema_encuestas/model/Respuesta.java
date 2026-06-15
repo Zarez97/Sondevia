@@ -22,6 +22,13 @@ public class Respuesta {
 
     private LocalDate fechaRespuesta;
 
+    // Etapa 17 - Borradores: BORRADOR (en progreso) | ENVIADA (definitiva)
+    @Column(name = "estado_respuesta")
+    private Integer estadoRespuesta;
+
+    @Column(name = "fecha_actualizacion")
+    private LocalDate fechaActualizacion;
+
     @ManyToOne
     @JoinColumn(name = "id_user", nullable = false)
     private Usuario usuario;
