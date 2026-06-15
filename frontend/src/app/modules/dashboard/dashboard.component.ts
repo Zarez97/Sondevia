@@ -11,6 +11,7 @@ const ICONOS: Record<string, string> = {
   'Gestionar Privilegios': 'M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4',
   'Desbloquear Usuarios':  'M8 11V7a4 4 0 0 1 8 0m-4 8v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2z',
   'Gestionar Encuestas':   'M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 4 0M9 12h6M9 16h4',
+  'Mis Encuestas':         'M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 4 0M9 14l2 2 4-4',
   'Responder Encuestas':   'M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z',
   'Ver Resultados':        'M18 20V10M12 20V4M6 20v-6',
 };
@@ -19,6 +20,7 @@ const ICONO_DEFAULT = 'M4 6h16M4 12h16M4 18h16';
 
 // Agrupación y orden lógico de las opciones del menú (por nombre de privilegio)
 const ORDEN: Record<string, { grupo: string; orden: number }> = {
+  'Mis Encuestas':         { grupo: 'Encuestas', orden: 0 },
   'Gestionar Encuestas':   { grupo: 'Encuestas', orden: 1 },
   'Ver Resultados':        { grupo: 'Encuestas', orden: 2 },
   'Responder Encuestas':   { grupo: 'Encuestas', orden: 3 },

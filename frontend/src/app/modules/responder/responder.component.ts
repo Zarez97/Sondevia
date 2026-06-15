@@ -103,7 +103,7 @@ export class ResponderComponent implements OnInit {
   }
 
   irAlInicio(): void {
-    this.router.navigateByUrl('/dashboard');
+    this.router.navigateByUrl('/dashboard/mis-encuestas');
   }
 
   private cargarPreguntas(): void {
@@ -369,7 +369,7 @@ export class ResponderComponent implements OnInit {
     this.publicoService.guardarBorrador(this.token, this.construirRespuestas()).subscribe({
       next: () => {
         this.guardandoBorrador = false;
-        this.router.navigateByUrl('/dashboard');
+        this.router.navigateByUrl('/dashboard/mis-encuestas');
       },
       error: (err) => {
         this.guardandoBorrador = false;

@@ -33,10 +33,22 @@ export interface EstadoRespuesta {
   tieneBorrador: boolean;
 }
 
+export interface MiEncuesta {
+  idEncuesta: number;
+  tituloEncuesta: string;
+  objetivoEncuesta: string;
+  tokenPublico: string;
+  estadoRespuesta: number; // 1=BORRADOR, 2=ENVIADA
+  estadoNombre: string;
+  fecha: string;
+  numeroRegistro: number | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PublicoService {
   private api = 'http://localhost:8080/publico';
   private responderApi = 'http://localhost:8080/responder';
+  private misEncuestasApi = 'http://localhost:8080/mis-encuestas';
 
   constructor(private http: HttpClient) {}
 
@@ -64,5 +76,10 @@ export class PublicoService {
 
   guardarBorrador(token: string, respuestas: DetalleEnvio[]): Observable<{ mensaje: string }> {
     return this.http.post<{ mensaje: string }>(`${this.responderApi}/${token}/borrador`, { respuestas });
+  }
+
+  // Etapa 18 - Panel del encuestado
+  misEncuestas(): Observable<MiEncuesta[]> {
+    return this.http.get<MiEncuesta[]>(this.misEncuestasApi);
   }
 }

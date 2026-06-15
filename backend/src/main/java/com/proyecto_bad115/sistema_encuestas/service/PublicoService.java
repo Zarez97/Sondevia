@@ -57,6 +57,32 @@ public class PublicoService {
         return preguntaService.listarPorEncuesta(encuesta.getIdEncuesta());
     }
 
+    /** Etapa 18 - Encuestas del encuestado: borradores (en progreso) + respondidas. */
+    public List<MiEncuestaDTO> misEncuestas(String email) {
+        String correo = normalizar(email);
+        List<MiEncuestaDTO> resultado = new ArrayList<>();
+        respuestaRepository.findByUsuarioEmailUserAndEstadoRespuesta(correo, EstadoRespuesta.BORRADOR)
+                .forEach(r -> resultado.add(toMiEncuestaDTO(r)));
+        respuestaRepository.findByUsuarioEmailUserAndEstadoRespuesta(correo, EstadoRespuesta.ENVIADA)
+                .forEach(r -> resultado.add(toMiEncuestaDTO(r)));
+        return resultado;
+    }
+
+    private MiEncuestaDTO toMiEncuestaDTO(Respuesta r) {
+        Encuesta e = r.getEncuesta();
+        boolean borrador = r.getEstadoRespuesta() != null && r.getEstadoRespuesta() == EstadoRespuesta.BORRADOR;
+        MiEncuestaDTO dto = new MiEncuestaDTO();
+        dto.setIdEncuesta(e.getIdEncuesta());
+        dto.setTituloEncuesta(e.getTituloEncuesta());
+        dto.setObjetivoEncuesta(e.getObjetivoEncuesta());
+        dto.setTokenPublico(e.getTokenPublico());
+        dto.setEstadoRespuesta(r.getEstadoRespuesta());
+        dto.setEstadoNombre(borrador ? "En progreso" : "Respondida");
+        dto.setFecha(borrador ? r.getFechaActualizacion() : r.getFechaRespuesta());
+        dto.setNumeroRegistro(borrador ? null : r.getIdRespuesta());
+        return dto;
+    }
+
     /** Indica si el encuestado autenticado ya ENVIÓ esta encuesta. */
     public boolean yaRespondio(String token, String email) {
         Encuesta encuesta = obtenerVigente(token);

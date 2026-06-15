@@ -1,0 +1,67 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Mis Encuestas</h1>
+      <p class="page-subtitle">Tus encuestas en progreso y las que ya respondiste</p>
+    </div>
+  </div>
+
+  @if (error) { <div class="alert-error">{{ error }}</div> }
+
+  @if (cargando) {
+    <div class="empty-state">Cargando tus encuestas...</div>
+  } @else if (enProgreso.length === 0 && respondidas.length === 0) {
+    <div class="empty-state">
+      <p>Aún no has respondido ninguna encuesta.</p>
+      <p>Cuando recibas un enlace de encuesta y la respondas, aparecerá aquí.</p>
+    </div>
+  } @else {
+
+    <!-- En progreso (borradores) -->
+    @if (enProgreso.length > 0) {
+      <h2 class="seccion-titulo">
+        En progreso
+        <span class="seccion-count">{{ enProgreso.length }}</span>
+      </h2>
+      <div class="cards-grid">
+        @for (e of enProgreso; track e.idEncuesta) {
+          <div class="encuesta-card">
+            <div class="card-header">
+              <span class="badge badge-progreso">En progreso</span>
+              <span class="card-fecha">Guardada: {{ e.fecha | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <h3 class="card-title">{{ e.tituloEncuesta }}</h3>
+            @if (e.objetivoEncuesta) { <p class="card-objetivo">{{ e.objetivoEncuesta }}</p> }
+            <div class="card-actions">
+              <button class="btn-continuar" (click)="continuar(e)">Continuar respondiendo →</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Respondidas (enviadas) -->
+    @if (respondidas.length > 0) {
+      <h2 class="seccion-titulo">
+        Respondidas
+        <span class="seccion-count">{{ respondidas.length }}</span>
+      </h2>
+      <div class="cards-grid">
+        @for (e of respondidas; track e.idEncuesta) {
+          <div class="encuesta-card">
+            <div class="card-header">
+              <span class="badge badge-respondida">Respondida</span>
+              <span class="card-fecha">{{ e.fecha | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <h3 class="card-title">{{ e.tituloEncuesta }}</h3>
+            @if (e.objetivoEncuesta) { <p class="card-objetivo">{{ e.objetivoEncuesta }}</p> }
+            <div class="card-actions">
+              <span class="registro-chip">Registro #{{ e.numeroRegistro }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+  }
+</div>
