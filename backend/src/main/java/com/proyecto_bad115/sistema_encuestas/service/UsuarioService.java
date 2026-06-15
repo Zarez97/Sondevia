@@ -6,8 +6,11 @@ import com.proyecto_bad115.sistema_encuestas.dto.CrearUsuarioDTO;
 import com.proyecto_bad115.sistema_encuestas.dto.UsuarioResponseDTO;
 import com.proyecto_bad115.sistema_encuestas.model.EstadoUsuario;
 import com.proyecto_bad115.sistema_encuestas.model.Usuario;
+import com.proyecto_bad115.sistema_encuestas.repository.EncuestaRepository;
+import com.proyecto_bad115.sistema_encuestas.repository.RespuestaRepository;
 import com.proyecto_bad115.sistema_encuestas.repository.UsuarioRepository;
 import com.proyecto_bad115.sistema_encuestas.repository.UsuarioRolRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,15 +22,21 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final UsuarioRolRepository usuarioRolRepository;
+    private final EncuestaRepository encuestaRepository;
+    private final RespuestaRepository respuestaRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
 
     public UsuarioService(UsuarioRepository usuarioRepository,
                           UsuarioRolRepository usuarioRolRepository,
+                          EncuestaRepository encuestaRepository,
+                          RespuestaRepository respuestaRepository,
                           PasswordEncoder passwordEncoder,
                           EmailService emailService) {
         this.usuarioRepository = usuarioRepository;
         this.usuarioRolRepository = usuarioRolRepository;
+        this.encuestaRepository = encuestaRepository;
+        this.respuestaRepository = respuestaRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
     }
@@ -106,6 +115,34 @@ public class UsuarioService {
         } catch (Exception ignored) {}
 
         return toDTO(usuario);
+    }
+
+    /**
+     * Eliminación segura: bloquea si el usuario es dueño de encuestas o tiene
+     * respuestas registradas (para no romper integridad), y no permite que un
+     * usuario se elimine a sí mismo. Limpia primero los vínculos de roles.
+     */
+    @Transactional
+    public void eliminarUsuario(Integer id, String emailSolicitante) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Usuario no encontrado"));
+
+        if (emailSolicitante != null && usuario.getEmailUser().equalsIgnoreCase(emailSolicitante)) {
+            throw new IllegalStateException("No puedes eliminar tu propia cuenta.");
+        }
+        if (encuestaRepository.existsByUsuarioIdUser(id)) {
+            throw new IllegalStateException(
+                    "No se puede eliminar: el usuario tiene encuestas creadas. " +
+                    "Reasigna o elimina esas encuestas, o da de baja al usuario.");
+        }
+        if (respuestaRepository.existsByUsuarioIdUser(id)) {
+            throw new IllegalStateException(
+                    "No se puede eliminar: el usuario tiene respuestas registradas en encuestas. " +
+                    "Considera darlo de baja en su lugar.");
+        }
+
+        usuarioRolRepository.deleteAll(usuarioRolRepository.findByUsuarioIdUser(id));
+        usuarioRepository.delete(usuario);
     }
 
     private UsuarioResponseDTO toDTO(Usuario u) {

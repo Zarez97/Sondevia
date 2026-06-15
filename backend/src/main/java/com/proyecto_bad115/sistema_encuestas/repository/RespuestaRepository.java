@@ -26,4 +26,7 @@ public interface RespuestaRepository extends JpaRepository<Respuesta, Integer> {
 
     // Migración: respuestas previas sin estado (se tratan como ENVIADAS)
     List<Respuesta> findByEstadoRespuestaIsNull();
+
+    // Eliminación segura de usuario: ¿tiene respuestas registradas?
+    boolean existsByUsuarioIdUser(Integer idUser);
 }

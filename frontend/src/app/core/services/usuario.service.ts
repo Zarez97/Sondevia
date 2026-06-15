@@ -58,4 +58,8 @@ export class UsuarioService {
   desbloquear(id: number): Observable<Usuario> {
     return this.http.patch<Usuario>(`${this.API}/${id}/desbloquear`, {}, { headers: this.headers() });
   }
+
+  eliminar(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.API}/${id}`, { headers: this.headers() });
+  }
 }

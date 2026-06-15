@@ -15,4 +15,7 @@ public interface EncuestaRepository extends JpaRepository<Encuesta, Integer> {
     List<Encuesta> findByEstadoEncuesta(Integer estado);
 
     Optional<Encuesta> findByTokenPublico(String tokenPublico);
+
+    // Eliminación segura de usuario: ¿es dueño de alguna encuesta?
+    boolean existsByUsuarioIdUser(Integer idUser);
 }

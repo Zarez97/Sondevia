@@ -155,6 +155,20 @@ export class UsuariosComponent implements OnInit {
     });
   }
 
+  async eliminar(u: Usuario): Promise<void> {
+    const ok = await this.confirm.ask({
+      title: 'Eliminar usuario',
+      message: `Se eliminará permanentemente a "${u.nombreUser}" (${u.emailUser}). Esta acción no se puede deshacer. ¿Continuar?`,
+      confirmText: 'Eliminar',
+      variant: 'danger'
+    });
+    if (!ok) return;
+    this.usuarioService.eliminar(u.idUser).subscribe({
+      next: () => { this.mostrarExito('Usuario eliminado.'); this.cargarUsuarios(); },
+      error: (e) => this.mostrarError(e.error?.mensaje || 'No se pudo eliminar el usuario.')
+    });
+  }
+
   // ── Gestión de roles del usuario ──────────────────────
   abrirRoles(u: Usuario): void {
     this.usuarioRoles = u;
