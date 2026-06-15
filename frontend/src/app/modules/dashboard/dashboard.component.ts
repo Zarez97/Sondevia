@@ -1,9 +1,25 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, signal, computed } from '@angular/core';
-import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { AuthService } from '../../core/services/auth.service';
 import { MenuService, MenuItem } from '../../core/services/menu.service';
 import { ConfirmService } from '../../core/services/confirm.service';
+
+interface Crumb { label: string; url: string; home?: boolean; }
+
+// Etiquetas legibles por segmento de ruta para el breadcrumb
+const CRUMB_LABELS: Record<string, string> = {
+  usuarios: 'Usuarios',
+  bloqueados: 'Bloqueados',
+  roles: 'Roles',
+  privilegios: 'Privilegios',
+  encuestas: 'Encuestas',
+  preguntas: 'Preguntas',
+  resultados: 'Resultados',
+  'mis-encuestas': 'Mis Encuestas',
+};
 
 const ICONOS: Record<string, string> = {
   'Gestionar Usuarios':    'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm8 4v6m3-3h-6',
@@ -48,6 +64,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   user: { nombre: string; email: string } | null = null;
   sidebarColapsado = false;
 
+  // Breadcrumb (ruta de navegación) según la URL actual
+  readonly breadcrumbs = signal<Crumb[]>([]);
+  private routerSub?: Subscription;
+
   // Reloj del sistema para la barra superior (reactivo)
   private reloj = signal(new Date());
   private intervaloReloj?: ReturnType<typeof setInterval>;
@@ -67,6 +87,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.intervaloReloj = setInterval(() => this.reloj.set(new Date()), 60000);
+
+    this.breadcrumbs.set(this.construirBreadcrumbs(this.router.url));
+    this.routerSub = this.router.events
+      .pipe(filter(e => e instanceof NavigationEnd))
+      .subscribe(e => this.breadcrumbs.set(this.construirBreadcrumbs((e as NavigationEnd).urlAfterRedirects)));
+
     this.menuService.obtenerMenu().subscribe({
       next: (items) => { this.menuGrupos = this.agrupar(items); this.cdr.detectChanges(); },
       error: () => this.cerrarSesion()
@@ -75,6 +101,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.intervaloReloj) clearInterval(this.intervaloReloj);
+    this.routerSub?.unsubscribe();
+  }
+
+  private construirBreadcrumbs(url: string): Crumb[] {
+    const path = url.split('?')[0].split('#')[0];
+    const segmentos = path.split('/').filter(s => s.length);
+    const idx = segmentos.indexOf('dashboard');
+    const resto = idx >= 0 ? segmentos.slice(idx + 1) : segmentos;
+
+    const crumbs: Crumb[] = [{ label: 'Inicio', url: '/dashboard', home: true }];
+    let acc = '/dashboard';
+    for (const seg of resto) {
+      acc += `/${seg}`;
+      if (/^\d+$/.test(seg)) continue; // ids numéricos: mantienen la ruta pero no muestran etiqueta
+      crumbs.push({ label: CRUMB_LABELS[seg] ?? this.capitalizar(seg), url: acc });
+    }
+    return crumbs;
+  }
+
+  private capitalizar(s: string): string {
+    const t = s.replace(/-/g, ' ');
+    return t.charAt(0).toUpperCase() + t.slice(1);
   }
 
   private agrupar(items: MenuItem[]): MenuGrupo[] {
