@@ -168,6 +168,11 @@ textarea { resize: vertical; }
   padding-top: 8px; border-top: 1px solid #f3f4f6;
 }
 
+/* Footers que cuelgan directo del modal (publicar/éxito): necesitan su propio margen */
+.modal > .modal-footer {
+  padding: 14px 24px 22px;
+}
+
 /* ── Modal de publicación (CU08) ─────────────────── */
 .publicar-intro { font-size: 0.875rem; color: #6b7280; }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, signal, computed } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
@@ -43,10 +43,17 @@ interface MenuGrupo {
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   menuGrupos: MenuGrupo[] = [];
   user: { nombre: string; email: string } | null = null;
   sidebarColapsado = false;
+
+  // Reloj del sistema para la barra superior (reactivo)
+  private reloj = signal(new Date());
+  private intervaloReloj?: ReturnType<typeof setInterval>;
+  readonly fechaTexto = computed(() =>
+    new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(this.reloj())
+  );
 
   constructor(
     private authService: AuthService,
@@ -59,10 +66,15 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.intervaloReloj = setInterval(() => this.reloj.set(new Date()), 60000);
     this.menuService.obtenerMenu().subscribe({
       next: (items) => { this.menuGrupos = this.agrupar(items); this.cdr.detectChanges(); },
       error: () => this.cerrarSesion()
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.intervaloReloj) clearInterval(this.intervaloReloj);
   }
 
   private agrupar(items: MenuItem[]): MenuGrupo[] {
