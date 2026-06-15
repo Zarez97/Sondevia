@@ -6,6 +6,7 @@ import { forkJoin } from 'rxjs';
 import { UsuarioService, Usuario, CrearUsuario, ActualizarUsuario } from '../../core/services/usuario.service';
 import { RolService, RolResponse } from '../../core/services/rol.service';
 import { ConfirmService } from '../../core/services/confirm.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-usuarios',
@@ -47,7 +48,8 @@ export class UsuariosComponent implements OnInit {
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
     private route: ActivatedRoute,
-    private confirm: ConfirmService
+    private confirm: ConfirmService,
+    private auth: AuthService
   ) {
     this.form = this.fb.group({
       nombreUser: ['', Validators.required],
@@ -165,8 +167,33 @@ export class UsuariosComponent implements OnInit {
     if (!ok) return;
     this.usuarioService.eliminar(u.idUser).subscribe({
       next: () => { this.mostrarExito('Usuario eliminado.'); this.cargarUsuarios(); },
-      error: (e) => this.mostrarError(e.error?.mensaje || 'No se pudo eliminar el usuario.')
+      error: (e) => this.manejarErrorEliminar(e, u)
     });
+  }
+
+  // Si no se pudo eliminar por dependencias, ofrece dar de baja en el mismo diálogo
+  private async manejarErrorEliminar(e: any, u: Usuario): Promise<void> {
+    const mensaje = e.error?.mensaje || 'No se pudo eliminar el usuario.';
+    const ofrecerBaja = e.status === 409 && u.estadoUser === this.ACTIVO && !this.esUsuarioActual(u);
+
+    if (!ofrecerBaja) { this.mostrarError(mensaje); return; }
+
+    const baja = await this.confirm.ask({
+      title: 'No se puede eliminar',
+      message: `${mensaje} ¿Quieres darlo de baja ahora? Quedará inactivo y conservará su historial.`,
+      confirmText: 'Dar de baja',
+      cancelText: 'Cerrar',
+      variant: 'warning'
+    });
+    if (!baja) return;
+    this.usuarioService.darDeBaja(u.idUser).subscribe({
+      next: () => { this.mostrarExito('Usuario dado de baja.'); this.cargarUsuarios(); },
+      error: () => this.mostrarError('Error al dar de baja.')
+    });
+  }
+
+  private esUsuarioActual(u: Usuario): boolean {
+    return this.auth.getUser()?.email?.toLowerCase() === u.emailUser.toLowerCase();
   }
 
   // ── Gestión de roles del usuario ──────────────────────
