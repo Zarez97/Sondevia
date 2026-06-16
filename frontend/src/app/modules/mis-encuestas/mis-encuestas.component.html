@@ -4,6 +4,11 @@
       <h1 class="page-title">Mis Encuestas</h1>
       <p class="page-subtitle">Tus encuestas en progreso y las que ya respondiste</p>
     </div>
+    @if (!cargando && (enProgreso.length > 0 || respondidas.length > 0)) {
+      <div class="header-actions">
+        <app-search-bar [(valor)]="busqueda" placeholder="Buscar por título u objetivo..." />
+      </div>
+    }
   </div>
 
   @if (error) { <div class="alert-error">{{ error }}</div> }
@@ -17,14 +22,18 @@
     </div>
   } @else {
 
+    @if (enProgresoFiltradas.length === 0 && respondidasFiltradas.length === 0) {
+      <div class="empty-state">No se encontraron resultados para “{{ busqueda }}”.</div>
+    }
+
     <!-- En progreso (borradores) -->
-    @if (enProgreso.length > 0) {
+    @if (enProgresoFiltradas.length > 0) {
       <h2 class="seccion-titulo">
         En progreso
-        <span class="seccion-count">{{ enProgreso.length }}</span>
+        <span class="seccion-count">{{ enProgresoFiltradas.length }}</span>
       </h2>
       <div class="cards-grid">
-        @for (e of enProgreso; track e.idEncuesta) {
+        @for (e of enProgresoFiltradas; track e.idEncuesta) {
           <div class="encuesta-card">
             <div class="card-header">
               <span class="badge badge-progreso">En progreso</span>
@@ -41,13 +50,13 @@
     }
 
     <!-- Respondidas (enviadas) -->
-    @if (respondidas.length > 0) {
+    @if (respondidasFiltradas.length > 0) {
       <h2 class="seccion-titulo">
         Respondidas
-        <span class="seccion-count">{{ respondidas.length }}</span>
+        <span class="seccion-count">{{ respondidasFiltradas.length }}</span>
       </h2>
       <div class="cards-grid">
-        @for (e of respondidas; track e.idEncuesta) {
+        @for (e of respondidasFiltradas; track e.idEncuesta) {
           <div class="encuesta-card">
             <div class="card-header">
               <span class="badge badge-respondida">Respondida</span>

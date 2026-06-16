@@ -7,11 +7,13 @@ import { UsuarioService, Usuario, CrearUsuario, ActualizarUsuario } from '../../
 import { RolService, RolResponse } from '../../core/services/rol.service';
 import { ConfirmService } from '../../core/services/confirm.service';
 import { AuthService } from '../../core/services/auth.service';
+import { SearchBarComponent } from '../../shared/search-bar/search-bar.component';
+import { coincide } from '../../core/utils/search.util';
 
 @Component({
   selector: 'app-usuarios',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, SearchBarComponent],
   templateUrl: './usuarios.component.html',
   styleUrl: './usuarios.component.css'
 })
@@ -33,6 +35,7 @@ export class UsuariosComponent implements OnInit {
   readonly BLOQUEADO = 2;
 
   soloBloqueados = false;
+  busqueda = '';
 
   // Gestión de roles del usuario
   mostrarRolesModal = false;
@@ -65,9 +68,18 @@ export class UsuariosComponent implements OnInit {
   }
 
   get listaVisible(): Usuario[] {
-    return this.soloBloqueados
+    const base = this.soloBloqueados
       ? this.usuarios.filter(u => u.estadoUser === this.BLOQUEADO)
       : this.usuarios;
+    return base.filter(u =>
+      coincide(this.busqueda, u.nombreUser, u.emailUser, u.roles?.join(' '), this.estadoLabel(u.estadoUser))
+    );
+  }
+
+  get hayUsuarios(): boolean {
+    return this.soloBloqueados
+      ? this.usuarios.some(u => u.estadoUser === this.BLOQUEADO)
+      : this.usuarios.length > 0;
   }
 
   cargarUsuarios(): void {

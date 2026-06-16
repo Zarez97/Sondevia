@@ -4,7 +4,12 @@
       <h2 class="page-title">Asignar Roles</h2>
       <p class="page-subtitle">Gestiona los roles del sistema y sus privilegios</p>
     </div>
-    <button class="btn-primary" (click)="abrirCrear()">+ Nuevo rol</button>
+    <div class="header-actions">
+      @if (!cargando && roles.length > 0) {
+        <app-search-bar [(valor)]="busqueda" placeholder="Buscar por nombre o descripción..." />
+      }
+      <button class="btn-primary" (click)="abrirCrear()">+ Nuevo rol</button>
+    </div>
   </div>
 
   @if (exito) { <div class="alert alert-success">{{ exito }}</div> }
@@ -15,8 +20,10 @@
   <div class="card">
     @if (cargando) {
       <div class="empty-state">Cargando roles...</div>
-    } @else if (roles.length === 0) {
-      <div class="empty-state">No hay roles registrados.</div>
+    } @else if (rolesFiltrados.length === 0) {
+      <div class="empty-state">
+        {{ busqueda ? 'No se encontraron resultados para “' + busqueda + '”.' : 'No hay roles registrados.' }}
+      </div>
     } @else {
       <table class="tabla">
         <thead>
@@ -29,7 +36,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (rol of roles; track rol.idRol) {
+          @for (rol of rolesFiltrados; track rol.idRol) {
             <tr>
               <td>{{ rol.idRol }}</td>
               <td><span class="badge-rol">{{ rol.nombreRol }}</span></td>

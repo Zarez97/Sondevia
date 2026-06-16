@@ -6,16 +6,19 @@ import { EncuestaService, Encuesta, EncuestaRequest } from '../../core/services/
 import { PreguntaService, Pregunta } from '../../core/services/pregunta.service';
 import { ConfirmService } from '../../core/services/confirm.service';
 import { ToastService } from '../../core/services/toast.service';
+import { SearchBarComponent } from '../../shared/search-bar/search-bar.component';
+import { coincide } from '../../core/utils/search.util';
 
 @Component({
   selector: 'app-encuestas',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, SearchBarComponent],
   templateUrl: './encuestas.component.html',
   styleUrl: './encuestas.component.css'
 })
 export class EncuestasComponent implements OnInit {
   encuestas: Encuesta[] = [];
+  busqueda = '';
   cargando = true;
   mostrarModal = false;
   editando: Encuesta | null = null;
@@ -52,6 +55,12 @@ export class EncuestasComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargar();
+  }
+
+  get encuestasFiltradas(): Encuesta[] {
+    return this.encuestas.filter(e =>
+      coincide(this.busqueda, e.tituloEncuesta, e.objetivoEncuesta, e.grupoMeta, e.estadoNombre)
+    );
   }
 
   cargar(): void {

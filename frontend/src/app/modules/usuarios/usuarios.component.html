@@ -7,9 +7,14 @@
         {{ soloBloqueados ? 'Reactiva las cuentas bloqueadas por intentos fallidos' : 'Administra las cuentas de usuario del sistema' }}
       </p>
     </div>
-    @if (!soloBloqueados) {
-      <button class="btn-primary" (click)="abrirCrear()">+ Nuevo usuario</button>
-    }
+    <div class="header-actions">
+      @if (!cargando && hayUsuarios) {
+        <app-search-bar [(valor)]="busqueda" placeholder="Buscar por nombre, correo, rol o estado..." />
+      }
+      @if (!soloBloqueados) {
+        <button class="btn-primary" (click)="abrirCrear()">+ Nuevo usuario</button>
+      }
+    </div>
   </div>
 
   @if (exito) {
@@ -23,7 +28,9 @@
     @if (cargando) {
       <div class="empty-state">Cargando usuarios...</div>
     } @else if (listaVisible.length === 0) {
-      <div class="empty-state">{{ soloBloqueados ? 'No hay usuarios bloqueados.' : 'No hay usuarios registrados.' }}</div>
+      <div class="empty-state">
+        {{ busqueda ? 'No se encontraron resultados para “' + busqueda + '”.' : (soloBloqueados ? 'No hay usuarios bloqueados.' : 'No hay usuarios registrados.') }}
+      </div>
     } @else {
       <table class="tabla">
         <thead>

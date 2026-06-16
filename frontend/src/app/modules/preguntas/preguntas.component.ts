@@ -4,6 +4,8 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } 
 import { ActivatedRoute, Router } from '@angular/router';
 import { PreguntaService, Pregunta, PreguntaRequest } from '../../core/services/pregunta.service';
 import { EncuestaService, Encuesta } from '../../core/services/encuesta.service';
+import { SearchBarComponent } from '../../shared/search-bar/search-bar.component';
+import { coincide } from '../../core/utils/search.util';
 import { ConfirmService } from '../../core/services/confirm.service';
 
 type TipoPrincipal = 'ABIERTA' | 'CERRADA';
@@ -13,13 +15,14 @@ type TipoCerrada = 'DICOTOMICA' | 'ELECCION_UNICA' | 'ELECCION_MULTIPLE' | 'RANK
 @Component({
   selector: 'app-preguntas',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, SearchBarComponent],
   templateUrl: './preguntas.component.html',
   styleUrl: './preguntas.component.css'
 })
 export class PreguntasComponent implements OnInit {
   encuesta: Encuesta | null = null;
   preguntas: Pregunta[] = [];
+  busqueda = '';
   cargando = true;
   mostrarModal = false;
   editando: Pregunta | null = null;
@@ -252,6 +255,10 @@ export class PreguntasComponent implements OnInit {
   cerrarModal(): void { this.mostrarModal = false; }
   get f() { return this.form.controls; }
   get enDiseno(): boolean { return this.encuesta?.estadoEncuesta === 1; }
+
+  get preguntasFiltradas(): Pregunta[] {
+    return this.preguntas.filter(p => coincide(this.busqueda, p.descripcionPregunta));
+  }
 
   esCerradaDicotomica(p: Pregunta): boolean {
     return p.tipoPregunta === 'CERRADA' && p.opciones?.length === 2;

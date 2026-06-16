@@ -2,17 +2,20 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { PublicoService, MiEncuesta } from '../../core/services/publico.service';
+import { SearchBarComponent } from '../../shared/search-bar/search-bar.component';
+import { coincide } from '../../core/utils/search.util';
 
 @Component({
   selector: 'app-mis-encuestas',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, SearchBarComponent],
   templateUrl: './mis-encuestas.component.html',
   styleUrl: './mis-encuestas.component.css'
 })
 export class MisEncuestasComponent implements OnInit {
   cargando = true;
   error = '';
+  busqueda = '';
   enProgreso: MiEncuesta[] = [];
   respondidas: MiEncuesta[] = [];
 
@@ -24,6 +27,14 @@ export class MisEncuestasComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargar();
+  }
+
+  get enProgresoFiltradas(): MiEncuesta[] {
+    return this.enProgreso.filter(e => coincide(this.busqueda, e.tituloEncuesta, e.objetivoEncuesta));
+  }
+
+  get respondidasFiltradas(): MiEncuesta[] {
+    return this.respondidas.filter(e => coincide(this.busqueda, e.tituloEncuesta, e.objetivoEncuesta));
   }
 
   cargar(): void {

@@ -17,9 +17,14 @@
         </div>
       }
     </div>
-    @if (enDiseno) {
-      <button class="btn-primary" (click)="abrirAgregar()">+ Agregar pregunta</button>
-    }
+    <div class="header-actions">
+      @if (!cargando && preguntas.length > 0) {
+        <app-search-bar [(valor)]="busqueda" placeholder="Buscar por enunciado..." />
+      }
+      @if (enDiseno) {
+        <button class="btn-primary" (click)="abrirAgregar()">+ Agregar pregunta</button>
+      }
+    </div>
   </div>
 
   @if (error) { <div class="alert-error">{{ error }}</div> }
@@ -31,9 +36,11 @@
       <p>Esta encuesta no tiene preguntas aún.</p>
       @if (enDiseno) { <p>Haz clic en <strong>+ Agregar pregunta</strong> para comenzar.</p> }
     </div>
+  } @else if (preguntasFiltradas.length === 0) {
+    <div class="empty-state">No se encontraron preguntas para “{{ busqueda }}”.</div>
   } @else {
     <div class="preguntas-list">
-      @for (p of preguntas; track p.idPregunta; let i = $index) {
+      @for (p of preguntasFiltradas; track p.idPregunta; let i = $index) {
         <div class="pregunta-card">
           <div class="pregunta-numero">{{ i + 1 }}</div>
           <div class="pregunta-body">

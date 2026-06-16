@@ -19,3 +19,12 @@ html, body {
   --brand-sidebar:        #1A3665;
   --brand-sidebar-active: rgba(43, 87, 154, 0.40);
 }
+
+/* Grupo de acciones del encabezado: búsqueda + botón "+ Nuevo…" en la misma fila */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}

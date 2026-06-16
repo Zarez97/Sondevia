@@ -4,7 +4,12 @@
       <h1 class="page-title">Gestión de Encuestas</h1>
       <p class="page-subtitle">Crea y administra tus encuestas</p>
     </div>
-    <button class="btn-primary" (click)="abrirCrear()">+ Nueva encuesta</button>
+    <div class="header-actions">
+      @if (!cargando && encuestas.length > 0) {
+        <app-search-bar [(valor)]="busqueda" placeholder="Buscar por título, objetivo, grupo meta o estado..." />
+      }
+      <button class="btn-primary" (click)="abrirCrear()">+ Nueva encuesta</button>
+    </div>
   </div>
 
   @if (error) {
@@ -18,9 +23,11 @@
       <p>No tienes encuestas creadas.</p>
       <p>Haz clic en <strong>+ Nueva encuesta</strong> para comenzar.</p>
     </div>
+  } @else if (encuestasFiltradas.length === 0) {
+    <div class="empty-state">No se encontraron resultados para “{{ busqueda }}”.</div>
   } @else {
     <div class="cards-grid">
-      @for (e of encuestas; track e.idEncuesta) {
+      @for (e of encuestasFiltradas; track e.idEncuesta) {
         <div class="encuesta-card">
           <div class="card-header">
             <span class="badge {{ estadoClass(e.estadoEncuesta) }}">{{ e.estadoNombre }}</span>

@@ -3,16 +3,19 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { PrivilegioService, PrivilegioResponseDTO } from '../../core/services/privilegio.service';
 import { ConfirmService } from '../../core/services/confirm.service';
+import { SearchBarComponent } from '../../shared/search-bar/search-bar.component';
+import { coincide } from '../../core/utils/search.util';
 
 @Component({
   selector: 'app-privilegios',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, SearchBarComponent],
   templateUrl: './privilegios.component.html',
   styleUrl: './privilegios.component.css'
 })
 export class PrivilegiosComponent implements OnInit {
   privilegios: PrivilegioResponseDTO[] = [];
+  busqueda = '';
   cargando = false;
   exito = '';
   error = '';
@@ -38,6 +41,12 @@ export class PrivilegiosComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargar();
+  }
+
+  get privilegiosFiltrados(): PrivilegioResponseDTO[] {
+    return this.privilegios.filter(p =>
+      coincide(this.busqueda, p.nombrePrivilegio, p.descripcionPrivilegio, p.urlPrivilegio)
+    );
   }
 
   cargar(): void {

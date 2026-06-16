@@ -5,11 +5,13 @@ import { RolService, RolResponse } from '../../core/services/rol.service';
 import { PrivilegioService, PrivilegioResponseDTO } from '../../core/services/privilegio.service';
 import { UsuarioService, Usuario } from '../../core/services/usuario.service';
 import { ConfirmService } from '../../core/services/confirm.service';
+import { SearchBarComponent } from '../../shared/search-bar/search-bar.component';
+import { coincide } from '../../core/utils/search.util';
 
 @Component({
   selector: 'app-roles',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, SearchBarComponent],
   templateUrl: './roles.component.html',
   styleUrl: './roles.component.css'
 })
@@ -17,6 +19,7 @@ export class RolesComponent implements OnInit {
   roles: RolResponse[] = [];
   privilegios: PrivilegioResponseDTO[] = [];
   usuarios: Usuario[] = [];
+  busqueda = '';
 
   rolSeleccionado: RolResponse | null = null;
   cargando = false;
@@ -51,6 +54,10 @@ export class RolesComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargar();
+  }
+
+  get rolesFiltrados(): RolResponse[] {
+    return this.roles.filter(r => coincide(this.busqueda, r.nombreRol, r.descripcionRol));
   }
 
   cargar(): void {
