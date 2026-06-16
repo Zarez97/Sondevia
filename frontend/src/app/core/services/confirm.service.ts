@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, ApplicationRef, inject } from '@angular/core';
 
 export type ConfirmVariant = 'danger' | 'warning' | 'primary' | 'info';
 
@@ -23,6 +23,7 @@ export interface ConfirmState extends ConfirmOptions {
  */
 @Injectable({ providedIn: 'root' })
 export class ConfirmService {
+  private readonly appRef = inject(ApplicationRef);
   readonly state = signal<ConfirmState | null>(null);
   private resolver?: (v: boolean) => void;
 
@@ -35,6 +36,7 @@ export class ConfirmService {
       variant: opts.variant ?? 'primary',
       showCancel: true,
     });
+    this.programarRender();
     return new Promise<boolean>(res => (this.resolver = res));
   }
 
@@ -47,6 +49,7 @@ export class ConfirmService {
       variant: opts.variant ?? 'info',
       showCancel: false,
     });
+    this.programarRender();
     return new Promise<boolean>(res => (this.resolver = res));
   }
 
@@ -54,6 +57,15 @@ export class ConfirmService {
     this.state.set(null);
     const r = this.resolver;
     this.resolver = undefined;
+    this.programarRender();
     r?.(value);
+  }
+
+  /**
+   * Fuerza el render del diálogo aunque se invoque desde un callback asíncrono
+   * (la app es zoneless; un click dispara render solo, pero un callback HTTP no).
+   */
+  private programarRender(): void {
+    queueMicrotask(() => this.appRef.tick());
   }
 }
