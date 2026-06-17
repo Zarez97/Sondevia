@@ -36,6 +36,7 @@ export class UsuariosComponent implements OnInit {
 
   soloBloqueados = false;
   busqueda = '';
+  procesando = new Set<number>(); // acciones en curso (evita doble clic)
 
   // Gestión de roles del usuario
   mostrarRolesModal = false;
@@ -162,10 +163,27 @@ export class UsuariosComponent implements OnInit {
     });
   }
 
-  desbloquear(id: number): void {
-    this.usuarioService.desbloquear(id).subscribe({
-      next: () => { this.mostrarExito('Usuario desbloqueado. Se envió notificación por correo.'); this.cargarUsuarios(); },
-      error: () => this.mostrarError('Error al desbloquear usuario.')
+  async desbloquear(u: Usuario): Promise<void> {
+    if (this.procesando.has(u.idUser)) return;
+    const ok = await this.confirm.ask({
+      title: 'Desbloquear usuario',
+      message: `Se reactivará la cuenta de "${u.nombreUser}" y se enviará un correo de notificación a ${u.emailUser}. ¿Continuar?`,
+      confirmText: 'Desbloquear',
+      variant: 'primary'
+    });
+    if (!ok) return;
+
+    this.procesando.add(u.idUser);
+    this.usuarioService.desbloquear(u.idUser).subscribe({
+      next: () => {
+        this.procesando.delete(u.idUser);
+        this.mostrarExito('Usuario desbloqueado. Se le notificó por correo.');
+        this.cargarUsuarios();
+      },
+      error: () => {
+        this.procesando.delete(u.idUser);
+        this.mostrarError('Error al desbloquear usuario.');
+      }
     });
   }
 

@@ -11,8 +11,6 @@ import com.proyecto_bad115.sistema_encuestas.repository.RespuestaRepository;
 import com.proyecto_bad115.sistema_encuestas.repository.UsuarioRepository;
 import com.proyecto_bad115.sistema_encuestas.repository.UsuarioRolRepository;
 import jakarta.transaction.Transactional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -21,8 +19,6 @@ import java.util.NoSuchElementException;
 
 @Service
 public class UsuarioService {
-
-    private static final Logger log = LoggerFactory.getLogger(UsuarioService.class);
 
     private final UsuarioRepository usuarioRepository;
     private final UsuarioRolRepository usuarioRolRepository;
@@ -73,11 +69,7 @@ public class UsuarioService {
 
         usuarioRepository.save(usuario);
 
-        try {
-            emailService.enviarBienvenida(dto.getEmailUser(), dto.getNombreUser(), dto.getContraseniaUser());
-        } catch (Exception e) {
-            log.warn("No se pudo enviar el correo de bienvenida a {}: {}", dto.getEmailUser(), e.getMessage());
-        }
+        emailService.enviarBienvenida(dto.getEmailUser(), dto.getNombreUser(), dto.getContraseniaUser());
 
         return toDTO(usuario);
     }
@@ -116,11 +108,7 @@ public class UsuarioService {
         usuario.setIntentosFallidos(0);
         usuarioRepository.save(usuario);
 
-        try {
-            emailService.enviarDesbloqueo(usuario.getEmailUser(), usuario.getNombreUser());
-        } catch (Exception e) {
-            log.warn("No se pudo enviar el correo de desbloqueo a {}: {}", usuario.getEmailUser(), e.getMessage());
-        }
+        emailService.enviarDesbloqueo(usuario.getEmailUser(), usuario.getNombreUser());
 
         return toDTO(usuario);
     }

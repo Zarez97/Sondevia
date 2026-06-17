@@ -68,6 +68,7 @@
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 .btn-icon:hover { background: #f9fafb; color: #374151; border-color: #d1d5db; }
+.btn-icon:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-icon svg { width: 16px; height: 16px; }
 .btn-icon.danger:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
 .btn-icon.success:hover { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
