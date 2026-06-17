@@ -197,7 +197,7 @@ a.crumb:hover { color: var(--brand-primary); }
 }
 
 .tb-nombre { font-size: 0.85rem; font-weight: 600; color: #111827; }
-.tb-email { font-size: 0.72rem; color: #9ca3af; }
+.tb-rol { font-size: 0.72rem; color: #9ca3af; }
 
 .topbar-logout {
   display: inline-flex;

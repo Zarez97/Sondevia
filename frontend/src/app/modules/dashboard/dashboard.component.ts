@@ -62,7 +62,7 @@ interface MenuGrupo {
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   menuGrupos: MenuGrupo[] = [];
-  user: { nombre: string; email: string } | null = null;
+  user: { nombre: string; email: string; roles?: string[] } | null = null;
   sidebarColapsado = false;
 
   // Breadcrumb (ruta de navegación) según la URL actual
@@ -84,6 +84,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private confirm: ConfirmService
   ) {
     this.user = this.authService.getUser();
+  }
+
+  // Rol(es) del usuario autenticado, en formato legible para el topbar
+  get rolUsuario(): string {
+    const roles = this.user?.roles ?? [];
+    return roles.map(r => this.formatearRol(r)).join(' · ');
+  }
+
+  private formatearRol(rol: string): string {
+    // ADMINISTRADOR -> Administrador
+    return rol.charAt(0).toUpperCase() + rol.slice(1).toLowerCase();
   }
 
   ngOnInit(): void {

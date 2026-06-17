@@ -73,7 +73,7 @@
         <div class="topbar-avatar">{{ user?.nombre?.charAt(0) | uppercase }}</div>
         <div class="topbar-user">
           <span class="tb-nombre">{{ user?.nombre }}</span>
-          <span class="tb-email">{{ user?.email }}</span>
+          <span class="tb-rol">{{ rolUsuario || user?.email }}</span>
         </div>
         <button class="topbar-logout" (click)="logout()" title="Cerrar sesión">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
