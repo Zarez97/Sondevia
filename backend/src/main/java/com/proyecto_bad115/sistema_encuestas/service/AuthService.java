@@ -33,19 +33,34 @@ public class AuthService {
     private final RolRepository rolRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     public AuthService(UsuarioRepository usuarioRepository,
                        UsuarioRolRepository usuarioRolRepository,
                        RolPrivilegioRepository rolPrivilegioRepository,
                        RolRepository rolRepository,
                        JwtService jwtService,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder,
+                       EmailService emailService) {
         this.usuarioRepository = usuarioRepository;
         this.usuarioRolRepository = usuarioRolRepository;
         this.rolPrivilegioRepository = rolPrivilegioRepository;
         this.rolRepository = rolRepository;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
+    }
+
+    /**
+     * Solicitud de desbloqueo: si la cuenta existe y está bloqueada, notifica al
+     * administrador por correo. Siempre retorna sin revelar si el correo existe.
+     */
+    public void solicitarDesbloqueo(String email) {
+        usuarioRepository.findByEmailUser(email).ifPresent(usuario -> {
+            if (usuario.getEstadoUser() != null && usuario.getEstadoUser() == EstadoUsuario.BLOQUEADO) {
+                emailService.enviarSolicitudDesbloqueo(usuario.getEmailUser(), usuario.getNombreUser());
+            }
+        });
     }
 
     /**

@@ -8,10 +8,14 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 @Service
 public class EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
+    private static final DateTimeFormatter FECHA_HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private final JavaMailSender mailSender;
 
@@ -40,6 +44,32 @@ public class EmailService {
             mailSender.send(mensaje);
         } catch (Exception e) {
             log.warn("No se pudo enviar el correo de desbloqueo a {}: {}", destinatario, e.getMessage());
+        }
+    }
+
+    /** Notifica al administrador que un usuario bloqueado solicita el desbloqueo de su cuenta. */
+    @Async
+    public void enviarSolicitudDesbloqueo(String emailUsuario, String nombreUsuario) {
+        try {
+            SimpleMailMessage mensaje = new SimpleMailMessage();
+            mensaje.setFrom(remitente);
+            mensaje.setTo(remitente); // buzón del administrador (notificaciones.sondevia@gmail.com)
+            mensaje.setReplyTo(emailUsuario);
+            mensaje.setSubject("Sondevia - Solicitud de desbloqueo de cuenta");
+            mensaje.setText(
+                "Hola administrador,\n\n" +
+                "Un usuario ha solicitado el desbloqueo de su cuenta en Sondevia:\n\n" +
+                "  Nombre: " + nombreUsuario + "\n" +
+                "  Correo: " + emailUsuario + "\n" +
+                "  Fecha de solicitud: " + LocalDateTime.now().format(FECHA_HORA) + "\n\n" +
+                "La cuenta fue bloqueada por multiples intentos fallidos de inicio de sesion.\n" +
+                "Verifica la identidad del usuario y desbloquea la cuenta desde el panel de\n" +
+                "administracion (Usuarios bloqueados) si corresponde.\n\n" +
+                "Equipo Sondevia"
+            );
+            mailSender.send(mensaje);
+        } catch (Exception e) {
+            log.warn("No se pudo enviar la solicitud de desbloqueo de {}: {}", emailUsuario, e.getMessage());
         }
     }
 

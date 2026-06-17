@@ -41,6 +41,10 @@ export class AuthService {
     );
   }
 
+  solicitarDesbloqueo(email: string): Observable<{ mensaje: string }> {
+    return this.http.post<{ mensaje: string }>(`${this.API}/solicitar-desbloqueo`, { email });
+  }
+
   private guardarSesion(response: LoginResponse): void {
     localStorage.setItem(this.TOKEN_KEY, response.token);
     localStorage.setItem(this.USER_KEY, JSON.stringify({

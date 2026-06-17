@@ -4,6 +4,7 @@ import com.proyecto_bad115.sistema_encuestas.dto.LoginRequestDTO;
 import com.proyecto_bad115.sistema_encuestas.dto.LoginResponseDTO;
 import com.proyecto_bad115.sistema_encuestas.dto.MenuItemDTO;
 import com.proyecto_bad115.sistema_encuestas.dto.RegistroRequestDTO;
+import com.proyecto_bad115.sistema_encuestas.dto.SolicitudDesbloqueoDTO;
 import com.proyecto_bad115.sistema_encuestas.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -51,6 +52,13 @@ public class AuthController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("mensaje", e.getMessage()));
         }
+    }
+
+    @PostMapping("/solicitar-desbloqueo")
+    public ResponseEntity<?> solicitarDesbloqueo(@Valid @RequestBody SolicitudDesbloqueoDTO request) {
+        authService.solicitarDesbloqueo(request.getEmail());
+        return ResponseEntity.ok(Map.of(
+                "mensaje", "Si tu cuenta está bloqueada, se notificó al administrador para revisar tu solicitud."));
     }
 
     @GetMapping("/menu")

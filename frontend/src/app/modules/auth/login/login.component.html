@@ -114,6 +114,11 @@
             </svg>
             {{ errorMessage }}
           </div>
+          @if (bloqueado) {
+            <button type="button" class="link-desbloqueo" (click)="solicitarDesbloqueo()" [disabled]="solicitando">
+              {{ solicitando ? 'Enviando solicitud...' : 'Solicitar desbloqueo al administrador' }}
+            </button>
+          }
         }
 
         <button type="submit" class="btn-login" [disabled]="loading">
