@@ -19,5 +19,6 @@ public class EncuestaResponseDTO {
     private LocalDate fechaCierre;
     private String nombreUsuario;
     private Integer totalPreguntas;
+    private Long totalRespuestas;
     private String tokenPublico;
 }

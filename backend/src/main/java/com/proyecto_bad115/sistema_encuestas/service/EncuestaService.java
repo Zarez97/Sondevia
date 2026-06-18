@@ -8,6 +8,7 @@ import com.proyecto_bad115.sistema_encuestas.model.Usuario;
 import com.proyecto_bad115.sistema_encuestas.repository.EncuestaRepository;
 import com.proyecto_bad115.sistema_encuestas.repository.PreguntaRepository;
 import com.proyecto_bad115.sistema_encuestas.repository.UsuarioRepository;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -31,12 +32,13 @@ public class EncuestaService {
     }
 
     public List<EncuestaResponseDTO> listarPorUsuario(String email) {
-        return encuestaRepository.findByUsuarioEmailUser(email)
-                .stream().map(this::toDTO).toList();
+        return encuestaRepository.findResumenEncuestasByUsuario(email)
+                .stream().map(this::toDTOFromView).toList();
     }
 
     public List<EncuestaResponseDTO> listarTodas() {
-        return encuestaRepository.findAll().stream().map(this::toDTO).toList();
+        return encuestaRepository.findResumenTodasEncuestas()
+                .stream().map(this::toDTOFromView).toList();
     }
 
     public EncuestaResponseDTO buscarPorId(Integer id) {
@@ -55,7 +57,6 @@ public class EncuestaService {
         encuesta.setInstruccionesEncuesta(dto.getInstruccionesEncuesta());
         encuesta.setGrupoMeta(dto.getGrupoMeta());
         encuesta.setFechaCierre(dto.getFechaCierre());
-        encuesta.setFechaCreacion(LocalDate.now());
         encuesta.setEstadoEncuesta(EstadoEncuesta.EN_DISENO);
         encuesta.setUsuario(usuario);
 
@@ -80,47 +81,84 @@ public class EncuestaService {
     }
 
     /**
-     * CU08 - Publica una encuesta: valida requisitos, genera el enlace único
-     * y cambia el estado a PUBLICADA (bloqueando la edición de preguntas).
+     * CU08 - Publica una encuesta delegando validaciones y cambio de estado
+     * al procedure sp_publicar_encuesta (atomicidad garantizada en BD).
      */
     public EncuestaResponseDTO publicar(Integer id) {
         Encuesta encuesta = encuestaRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Encuesta no encontrada"));
 
-        if (encuesta.getEstadoEncuesta() != EstadoEncuesta.EN_DISENO) {
-            throw new IllegalStateException("Solo se pueden publicar encuestas en estado 'En diseño'");
+        String token = isBlank(encuesta.getTokenPublico())
+                ? UUID.randomUUID().toString().replace("-", "")
+                : encuesta.getTokenPublico();
+
+        try {
+            encuestaRepository.callPublicarEncuesta(id, token);
+        } catch (DataAccessException e) {
+            throw new IllegalStateException(mensajeProcedure(e));
         }
 
-        // Campos obligatorios completos
-        if (isBlank(encuesta.getTituloEncuesta()) || isBlank(encuesta.getObjetivoEncuesta())
-                || isBlank(encuesta.getInstruccionesEncuesta())) {
-            throw new IllegalArgumentException("Debe completar título, objetivo e instrucciones antes de publicar");
-        }
+        return toDTO(encuestaRepository.findById(id).orElseThrow());
+    }
 
-        // Al menos una pregunta configurada
-        if (preguntaRepository.countByEncuestaIdEncuesta(id) < 1) {
-            throw new IllegalArgumentException("Se requiere al menos una pregunta configurada para publicar la encuesta");
+    /**
+     * Cierra una encuesta publicada delegando la validación y cambio de estado
+     * al procedure sp_cerrar_encuesta.
+     */
+    public EncuestaResponseDTO cerrar(Integer id) {
+        try {
+            encuestaRepository.callCerrarEncuesta(id);
+        } catch (DataAccessException e) {
+            throw new IllegalStateException(mensajeProcedure(e));
         }
+        return toDTO(encuestaRepository.findById(id).orElseThrow());
+    }
 
-        // Fecha de cierre definida y vigente
-        if (encuesta.getFechaCierre() == null) {
-            throw new IllegalArgumentException("Debe establecer una fecha de cierre antes de publicar");
-        }
-        if (encuesta.getFechaCierre().isBefore(LocalDate.now())) {
-            throw new IllegalArgumentException("La fecha de cierre ya venció. Actualícela antes de continuar");
-        }
+    // Columnas de v_resumen_encuestas:
+    // 0:id 1:titulo 2:objetivo 3:instrucciones 4:grupoMeta 5:estado
+    // 6:fechaCreacion 7:fechaCierre 8:token 9:nombreUsuario 10:emailUsuario
+    // 11:totalPreguntas 12:totalRespuestas
+    private EncuestaResponseDTO toDTOFromView(Object[] row) {
+        EncuestaResponseDTO dto = new EncuestaResponseDTO();
+        dto.setIdEncuesta((Integer) row[0]);
+        dto.setTituloEncuesta((String) row[1]);
+        dto.setObjetivoEncuesta((String) row[2]);
+        dto.setInstruccionesEncuesta((String) row[3]);
+        dto.setGrupoMeta((String) row[4]);
+        dto.setEstadoEncuesta((Integer) row[5]);
+        dto.setEstadoNombre(nombreEstado((Integer) row[5]));
+        dto.setFechaCreacion(toLocalDate(row[6]));
+        dto.setFechaCierre(toLocalDate(row[7]));
+        dto.setTokenPublico((String) row[8]);
+        dto.setNombreUsuario((String) row[9]);
+        dto.setTotalPreguntas(row[11] != null ? ((Number) row[11]).intValue() : 0);
+        dto.setTotalRespuestas(row[12] != null ? ((Number) row[12]).longValue() : 0L);
+        return dto;
+    }
 
-        // Generar enlace único (solo si aún no tiene) y publicar
-        if (isBlank(encuesta.getTokenPublico())) {
-            encuesta.setTokenPublico(UUID.randomUUID().toString().replace("-", ""));
-        }
-        encuesta.setEstadoEncuesta(EstadoEncuesta.PUBLICADA);
-
-        return toDTO(encuestaRepository.save(encuesta));
+    private LocalDate toLocalDate(Object obj) {
+        if (obj == null) return null;
+        if (obj instanceof LocalDate ld) return ld;
+        if (obj instanceof java.sql.Date d) return d.toLocalDate();
+        return null;
     }
 
     private boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
+    }
+
+    private String mensajeProcedure(DataAccessException e) {
+        Throwable raiz = e;
+        while (raiz.getCause() != null) raiz = raiz.getCause();
+        String msg = raiz.getMessage();
+        if (msg == null) return "Error al procesar la operación";
+        int inicio = msg.indexOf("ERROR: ");
+        if (inicio >= 0) {
+            msg = msg.substring(inicio + 7);
+            int fin = msg.indexOf('\n');
+            if (fin > 0) msg = msg.substring(0, fin).trim();
+        }
+        return msg;
     }
 
     public void eliminar(Integer id) {

@@ -19,4 +19,5 @@ public class ResultadoPreguntaDTO {
     private String graficoSugerido; // "pastel" | "barras" | "linea" | "texto"
     private List<ConteoOpcionDTO> opciones = new ArrayList<>();
     private List<String> respuestasTexto = new ArrayList<>();
+    private Double promedio;
 }

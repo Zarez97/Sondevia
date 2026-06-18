@@ -71,11 +71,41 @@ public class PublicoService {
     /** Catálogo de encuestas publicadas y vigentes que cualquier usuario puede responder. */
     public List<EncuestaDisponibleDTO> encuestasDisponibles(String email) {
         String correo = normalizar(email);
-        LocalDate hoy = LocalDate.now();
-        return encuestaRepository.findByEstadoEncuesta(EstadoEncuesta.PUBLICADA).stream()
-                .filter(e -> e.getFechaCierre() == null || !e.getFechaCierre().isBefore(hoy))
-                .map(e -> toDisponibleDTO(e, correo))
+        return encuestaRepository.findEncuestasDisponiblesView().stream()
+                .map(row -> toDisponibleDTOFromView(row, correo))
                 .toList();
+    }
+
+    // Columnas de v_encuestas_disponibles:
+    // 0:idEncuesta 1:titulo 2:objetivo 3:grupoMeta 4:fechaCierre 5:token 6:totalPreguntas
+    private EncuestaDisponibleDTO toDisponibleDTOFromView(Object[] row, String correo) {
+        Integer idEncuesta = (Integer) row[0];
+        EncuestaDisponibleDTO dto = new EncuestaDisponibleDTO();
+        dto.setIdEncuesta(idEncuesta);
+        dto.setTituloEncuesta((String) row[1]);
+        dto.setObjetivoEncuesta((String) row[2]);
+        dto.setGrupoMeta((String) row[3]);
+        dto.setFechaCierre(toLocalDate(row[4]));
+        dto.setTokenPublico((String) row[5]);
+        dto.setTotalPreguntas(row[6] != null ? ((Number) row[6]).intValue() : 0);
+
+        Integer estado = null;
+        if (respuestaRepository.existsByEncuestaIdEncuestaAndUsuarioEmailUserAndEstadoRespuesta(
+                idEncuesta, correo, EstadoRespuesta.ENVIADA)) {
+            estado = EstadoRespuesta.ENVIADA;
+        } else if (respuestaRepository.findFirstByEncuestaIdEncuestaAndUsuarioEmailUserAndEstadoRespuesta(
+                idEncuesta, correo, EstadoRespuesta.BORRADOR).isPresent()) {
+            estado = EstadoRespuesta.BORRADOR;
+        }
+        dto.setEstadoRespuesta(estado);
+        return dto;
+    }
+
+    private LocalDate toLocalDate(Object obj) {
+        if (obj == null) return null;
+        if (obj instanceof LocalDate ld) return ld;
+        if (obj instanceof java.sql.Date d) return d.toLocalDate();
+        return null;
     }
 
     private EncuestaDisponibleDTO toDisponibleDTO(Encuesta e, String correo) {
@@ -161,7 +191,6 @@ public class PublicoService {
                     r.setEstadoRespuesta(EstadoRespuesta.BORRADOR);
                     return r;
                 });
-        borrador.setFechaActualizacion(LocalDate.now());
         Respuesta guardada = respuestaRepository.save(borrador);
 
         // Reemplaza los detalles previos del borrador
@@ -202,7 +231,6 @@ public class PublicoService {
         respuesta.setEncuesta(encuesta);
         respuesta.setEstadoRespuesta(EstadoRespuesta.ENVIADA);
         respuesta.setFechaRespuesta(LocalDate.now());
-        respuesta.setFechaActualizacion(LocalDate.now());
         Respuesta guardada = respuestaRepository.save(respuesta);
 
         // Si venía de un borrador, limpia sus detalles previos antes de re-guardar
