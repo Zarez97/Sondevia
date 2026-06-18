@@ -1,0 +1,70 @@
+.page { padding: 32px; }
+
+.page-header { margin-bottom: 28px; }
+.page-title { font-size: 1.5rem; font-weight: 700; color: #111827; margin-bottom: 4px; }
+.page-subtitle { font-size: 0.875rem; color: #6b7280; }
+
+.alert-error {
+  background: #fef2f2; border: 1px solid #fecaca;
+  color: #dc2626; padding: 10px 14px; border-radius: 8px;
+  margin-bottom: 16px; font-size: 0.875rem;
+}
+
+.empty-state { text-align: center; padding: 60px 20px; color: #9ca3af; font-size: 0.95rem; line-height: 1.7; }
+
+.seccion-titulo {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 1.05rem; font-weight: 700; color: #111827;
+  margin: 8px 0 16px;
+}
+.seccion-count {
+  background: var(--brand-primary-light); color: var(--brand-primary);
+  font-size: 0.75rem; font-weight: 700;
+  min-width: 22px; height: 22px; padding: 0 7px;
+  border-radius: 11px; display: inline-flex; align-items: center; justify-content: center;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.encuesta-card {
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+  padding: 20px; display: flex; flex-direction: column; gap: 10px;
+  transition: box-shadow 0.2s;
+}
+.encuesta-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+
+.card-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+.badge { padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+.badge-progreso { background: #fff7ed; color: #ea580c; }
+.badge-respondida { background: #f0fdf4; color: #16a34a; }
+
+.card-fecha { font-size: 0.78rem; color: #9ca3af; }
+
+.card-title {
+  font-size: 1rem; font-weight: 700; color: #111827;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.card-objetivo {
+  font-size: 0.83rem; color: #4b5563;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.card-actions {
+  display: flex; align-items: center;
+  padding-top: 10px; margin-top: auto; border-top: 1px solid #f3f4f6;
+}
+
+.btn-continuar {
+  background: var(--brand-primary); color: #fff; border: none;
+  padding: 8px 14px; border-radius: 8px; font-size: 0.83rem;
+  font-weight: 600; cursor: pointer; transition: background 0.2s;
+}
+.btn-continuar:hover { background: var(--brand-primary-hover); }
+
+.registro-chip { font-size: 0.8rem; color: #6b7280; font-weight: 600; }

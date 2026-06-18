@@ -1,0 +1,409 @@
+<div class="page">
+  <div class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="volver()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
+        Encuestas
+      </button>
+      @if (encuesta) {
+        <div>
+          <h1 class="page-title">{{ encuesta.tituloEncuesta }}</h1>
+          <p class="page-subtitle">
+            {{ preguntas.length }} pregunta{{ preguntas.length !== 1 ? 's' : '' }} ·
+            <span class="estado-badge estado-{{ encuesta.estadoEncuesta }}">{{ encuesta.estadoNombre }}</span>
+          </p>
+        </div>
+      }
+    </div>
+    <div class="header-actions">
+      @if (!cargando && preguntas.length > 0) {
+        <app-search-bar [(valor)]="busqueda" placeholder="Buscar por enunciado..." />
+      }
+      @if (enDiseno) {
+        <button class="btn-primary" (click)="abrirAgregar()">+ Agregar pregunta</button>
+      }
+    </div>
+  </div>
+
+  @if (error) { <div class="alert-error">{{ error }}</div> }
+
+  @if (cargando) {
+    <div class="empty-state">Cargando preguntas...</div>
+  } @else if (preguntas.length === 0) {
+    <div class="empty-state">
+      <p>Esta encuesta no tiene preguntas aún.</p>
+      @if (enDiseno) { <p>Haz clic en <strong>+ Agregar pregunta</strong> para comenzar.</p> }
+    </div>
+  } @else if (preguntasFiltradas.length === 0) {
+    <div class="empty-state">No se encontraron preguntas para “{{ busqueda }}”.</div>
+  } @else {
+    <div class="preguntas-list">
+      @for (p of preguntasFiltradas; track p.idPregunta; let i = $index) {
+        <div class="pregunta-card">
+          <div class="pregunta-numero">{{ i + 1 }}</div>
+          <div class="pregunta-body">
+            <div class="pregunta-header">
+              <span class="tipo-badge {{ colorTipo(p) }}">{{ labelTipo(p) }}</span>
+              @if (p.esMixta) {
+                <span class="tipo-badge tipo-mixta">+ Otros</span>
+              }
+              @if (p.obligatoriaPregunta) {
+                <span class="obligatoria-badge">Obligatoria</span>
+              }
+              @if (labelValidacion(p)) {
+                <span class="validacion-badge">{{ labelValidacion(p) }}</span>
+              }
+            </div>
+            <p class="pregunta-texto">{{ p.descripcionPregunta }}</p>
+
+            <!-- Preview según tipo -->
+            @if (p.tipoPregunta === 'ABIERTA') {
+              <input type="text" placeholder="Respuesta del encuestado..." disabled class="preview-input" />
+            }
+            @if (p.tipoPregunta === 'CERRADA') {
+              @if (p.tipoPreguntaCerrada === 'ESCALA' && p.opciones && p.opciones.length >= 2) {
+                <div class="escala-guardada-preview">
+                  <span class="escala-rango-label">Rango numérico: {{ p.opciones[0].textoOpcion }} – {{ p.opciones[1].textoOpcion }}</span>
+                  <input type="range" [min]="p.opciones[0].textoOpcion" [max]="p.opciones[1].textoOpcion" disabled class="preview-range" />
+                </div>
+              } @else if (p.tipoPreguntaCerrada === 'RANKING') {
+                <div class="opciones-preview">
+                  @for (op of p.opciones; track op.idOpcionRespuesta; let i = $index) {
+                    <div class="ranking-preview-item">
+                      <span class="ranking-numero">{{ i + 1 }}</span>
+                      <span>{{ op.textoOpcion }}</span>
+                    </div>
+                  }
+                </div>
+              } @else if (p.tipoPreguntaCerrada === 'LIKERT') {
+                <div class="likert-preview">
+                  @for (op of p.opciones; track op.idOpcionRespuesta) {
+                    <label class="likert-item">
+                      <input type="radio" disabled />
+                      <span class="likert-label">{{ op.textoOpcion }}</span>
+                    </label>
+                  }
+                </div>
+              } @else {
+                <div class="opciones-preview">
+                  @for (op of p.opciones; track op.idOpcionRespuesta) {
+                    <label class="opcion-preview-item" [class.opcion-otros]="op.esMixta">
+                      <input [type]="p.tipoPreguntaCerrada === 'ELECCION_MULTIPLE' ? 'checkbox' : 'radio'" disabled />
+                      <span>{{ op.textoOpcion }}{{ op.esMixta ? ':' : '' }}</span>
+                      @if (op.esMixta) {
+                        <input type="text" class="otros-input" placeholder="Especifique..." disabled />
+                      }
+                    </label>
+                  }
+                </div>
+              }
+            }
+          </div>
+          @if (enDiseno) {
+            <div class="pregunta-actions">
+              <button class="btn-icon btn-edit" (click)="abrirEditar(p)" title="Editar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button class="btn-icon btn-delete" (click)="eliminar(p)" title="Eliminar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  <path d="M10 11v6M14 11v6"/>
+                </svg>
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@if (mostrarModal) {
+  <div class="modal-overlay" (click)="cerrarModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editando ? 'Editar pregunta' : 'Nueva pregunta' }}</h2>
+        <button class="btn-close" (click)="cerrarModal()">✕</button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="guardar()" class="modal-body">
+        @if (errorModal) { <div class="alert-error">{{ errorModal }}</div> }
+
+        <!-- Tipo principal -->
+        @if (!editando) {
+          <div class="form-group">
+            <label>Tipo de pregunta</label>
+            <div class="tipo-selector">
+              <button type="button" class="tipo-btn" [class.active]="tipoPrincipal === 'ABIERTA'"
+                (click)="seleccionarTipoPrincipal('ABIERTA')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="15" y2="6"/>
+                </svg>
+                Abierta
+              </button>
+              <button type="button" class="tipo-btn" [class.active]="tipoPrincipal === 'CERRADA'"
+                (click)="seleccionarTipoPrincipal('CERRADA')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+                Cerrada
+              </button>
+            </div>
+          </div>
+
+          <!-- Subtipo cerrada -->
+          @if (tipoPrincipal === 'CERRADA') {
+            <div class="form-group">
+              <label>Subtipo</label>
+              <div class="tipo-selector">
+                <button type="button" class="tipo-btn" [class.active]="tipoCerrada === 'DICOTOMICA'"
+                  (click)="seleccionarTipoCerrada('DICOTOMICA')">
+                  Dicotómica
+                  <span class="subtipo-hint">Sí / No</span>
+                </button>
+                <button type="button" class="tipo-btn" [class.active]="tipoCerrada === 'ELECCION_UNICA'"
+                  (click)="seleccionarTipoCerrada('ELECCION_UNICA')">
+                  Politómica
+                  <span class="subtipo-hint">Una opción</span>
+                </button>
+                <button type="button" class="tipo-btn" [class.active]="tipoCerrada === 'ELECCION_MULTIPLE'"
+                  (click)="seleccionarTipoCerrada('ELECCION_MULTIPLE')">
+                  Múltiple
+                  <span class="subtipo-hint">Varias opciones</span>
+                </button>
+                <button type="button" class="tipo-btn" [class.active]="tipoCerrada === 'RANKING'"
+                  (click)="seleccionarTipoCerrada('RANKING')">
+                  Ranking
+                  <span class="subtipo-hint">Ordenar ítems</span>
+                </button>
+                <button type="button" class="tipo-btn" [class.active]="esEscala()"
+                  (click)="seleccionarTipoCerrada('ESCALA')">
+                  Escala
+                  <span class="subtipo-hint">Numérica/Likert</span>
+                </button>
+              </div>
+            </div>
+          }
+        }
+
+        <!-- Sub-selector escala -->
+        @if (esEscala() && tipoPrincipal === 'CERRADA') {
+          <div class="form-group">
+            <label>Tipo de escala</label>
+            <div class="tipo-selector">
+              <button type="button" class="tipo-btn" [class.active]="tipoCerrada === 'ESCALA'"
+                (click)="seleccionarTipoCerrada('ESCALA')">
+                Numérica
+                <span class="subtipo-hint">Rango min-max</span>
+              </button>
+              <button type="button" class="tipo-btn" [class.active]="tipoCerrada === 'LIKERT'"
+                (click)="seleccionarTipoCerrada('LIKERT')">
+                Likert
+                <span class="subtipo-hint">Nivel de acuerdo</span>
+              </button>
+              <button type="button" class="tipo-btn" [class.active]="tipoCerrada === 'NOMINAL'"
+                (click)="seleccionarTipoCerrada('NOMINAL')">
+                Nominal
+                <span class="subtipo-hint">Etiquetas texto</span>
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- Enunciado -->
+        <div class="form-group">
+          <label>Enunciado <span class="required">*</span></label>
+          <textarea formControlName="descripcionPregunta" rows="3"
+            placeholder="Escribe la pregunta..."></textarea>
+          @if (f['descripcionPregunta'].invalid && f['descripcionPregunta'].touched) {
+            <span class="field-error">El enunciado es obligatorio</span>
+          }
+        </div>
+
+        <!-- Validación abierta: límite de caracteres (CU07) -->
+        @if (tipoPrincipal === 'ABIERTA') {
+          <div class="form-group">
+            <label>Límite de caracteres <span class="subtipo-hint">(opcional)</span></label>
+            <div class="form-row">
+              <input type="number" min="0" [(ngModel)]="minCaracteres" [ngModelOptions]="{standalone: true}"
+                placeholder="Mínimo" class="opcion-input" />
+              <input type="number" min="1" [(ngModel)]="maxCaracteres" [ngModelOptions]="{standalone: true}"
+                placeholder="Máximo" class="opcion-input" />
+            </div>
+          </div>
+        }
+
+        <!-- Opciones -->
+        @if (tipoPrincipal === 'CERRADA') {
+
+          <!-- Escala numérica: min y max -->
+          @if (esEscalaNum()) {
+            <div class="form-row">
+              <div class="form-group">
+                <label>Valor mínimo</label>
+                <input type="number" [(ngModel)]="opciones[0]" [ngModelOptions]="{standalone: true}" placeholder="1" class="opcion-input" />
+              </div>
+              <div class="form-group">
+                <label>Valor máximo</label>
+                <input type="number" [(ngModel)]="opciones[1]" [ngModelOptions]="{standalone: true}" placeholder="10" class="opcion-input" />
+              </div>
+            </div>
+          }
+
+          <!-- Likert / Nominal / otras cerradas -->
+          @if (!esEscalaNum()) {
+            <div class="form-group">
+              <label>{{ esLikert() ? 'Etiquetas de la escala' : esNominal() ? 'Niveles de la escala' : 'Opciones de respuesta' }}</label>
+              <div class="opciones-editor">
+                @for (op of opciones; track trackByIndex($index); let i = $index) {
+                  <div class="opcion-row">
+                    @if (!esEscala()) { <span class="opcion-radio-mock"></span> }
+                    @if (esEscala()) { <span class="ranking-numero">{{ i + 1 }}</span> }
+                    <input type="text" [(ngModel)]="opciones[i]" [ngModelOptions]="{standalone: true}"
+                      placeholder="{{ esLikert() ? 'Etiqueta ' + (i+1) : 'Opción ' + (i+1) }}"
+                      class="opcion-input" [readonly]="tipoCerrada === 'DICOTOMICA'" />
+                    @if (tipoCerrada !== 'DICOTOMICA' && opciones.length > 2) {
+                      <button type="button" class="btn-remove-opcion" (click)="eliminarOpcion(i)">✕</button>
+                    }
+                  </div>
+                }
+                @if (tipoCerrada !== 'DICOTOMICA') {
+                  <button type="button" class="btn-add-opcion" (click)="agregarOpcion()">+ Agregar ítem</button>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Opción "Otros" (pregunta mixta) -->
+          @if (puedeSerMixta()) {
+            <div class="form-check">
+              <input type="checkbox" id="esMixta" [(ngModel)]="esMixtaPregunta" [ngModelOptions]="{standalone: true}" />
+              <label for="esMixta">Permitir opción <strong>"Otros"</strong> con texto libre</label>
+            </div>
+          }
+
+          <!-- Máximo de selecciones (CU07, solo múltiple) -->
+          @if (esMultiple()) {
+            <div class="form-group">
+              <label>Máximo de selecciones permitidas <span class="subtipo-hint">(opcional, sin límite si se deja vacío)</span></label>
+              <input type="number" min="1" [(ngModel)]="maxSelecciones" [ngModelOptions]="{standalone: true}"
+                placeholder="Sin límite" class="opcion-input" />
+            </div>
+          }
+        }
+
+        <!-- Obligatoria -->
+        <div class="form-check">
+          <input type="checkbox" id="obligatoria" formControlName="obligatoriaPregunta" />
+          <label for="obligatoria">Pregunta obligatoria</label>
+        </div>
+
+        <!-- Vista previa -->
+        <div class="preview-section">
+          <p class="preview-label">Vista previa</p>
+          <div class="preview-box">
+            <p class="preview-question">
+              {{ f['descripcionPregunta'].value || 'Escribe el enunciado...' }}
+              @if (f['obligatoriaPregunta'].value) { <span class="required"> *</span> }
+            </p>
+            @if (tipoPrincipal === 'ABIERTA') {
+              @if (tipoTexto === 'corta') {
+                <input type="text" placeholder="Respuesta corta..." disabled class="preview-input" />
+              } @else {
+                <textarea rows="3" placeholder="Respuesta larga..." disabled class="preview-textarea"></textarea>
+              }
+              @if (minCaracteres != null || maxCaracteres != null) {
+                <span class="validacion-hint">
+                  @if (minCaracteres != null && maxCaracteres != null) { Entre {{ minCaracteres }} y {{ maxCaracteres }} caracteres }
+                  @else if (maxCaracteres != null) { Máximo {{ maxCaracteres }} caracteres }
+                  @else { Mínimo {{ minCaracteres }} caracteres }
+                </span>
+              }
+            }
+            @if (tipoPrincipal === 'CERRADA') {
+              @if (esEscalaNum()) {
+                <div class="escala-num-preview">
+                  <div class="escala-range-labels">
+                    <span>{{ opciones[0] || '1' }}</span>
+                    <span>{{ opciones[1] || '10' }}</span>
+                  </div>
+                  <input type="range" [min]="minEscala" [max]="maxEscala" disabled class="preview-range" />
+                  <div class="escala-ticks">
+                    @for (n of escalaRange; track n) {
+                      <span>{{ n }}</span>
+                    }
+                  </div>
+                </div>
+              } @else if (esLikert()) {
+                <div class="likert-preview">
+                  @for (op of opciones; track trackByIndex($index); let i = $index) {
+                    @if (op.trim()) {
+                      <label class="likert-item">
+                        <input type="radio" disabled />
+                        <span class="likert-label">{{ op }}</span>
+                      </label>
+                    }
+                  }
+                </div>
+              } @else if (esNominal()) {
+                <div class="opciones-preview">
+                  @for (op of opciones; track trackByIndex($index)) {
+                    @if (op.trim()) {
+                      <label class="opcion-preview-item">
+                        <input type="radio" disabled />
+                        <span>{{ op }}</span>
+                      </label>
+                    }
+                  }
+                </div>
+              } @else if (esRanking()) {
+                <div class="opciones-preview">
+                  @for (op of opciones; track trackByIndex($index); let i = $index) {
+                    @if (op.trim()) {
+                      <div class="ranking-preview-item">
+                        <span class="ranking-numero">{{ i + 1 }}</span>
+                        <span>{{ op }}</span>
+                      </div>
+                    }
+                  }
+                </div>
+              } @else {
+                <div class="opciones-preview">
+                  @for (op of opciones; track trackByIndex($index)) {
+                    @if (op.trim()) {
+                      <label class="opcion-preview-item">
+                        <input [type]="esMultiple() ? 'checkbox' : 'radio'" disabled />
+                        <span>{{ op }}</span>
+                      </label>
+                    }
+                  }
+                  @if (puedeSerMixta() && esMixtaPregunta) {
+                    <label class="opcion-preview-item opcion-otros">
+                      <input [type]="esMultiple() ? 'checkbox' : 'radio'" disabled />
+                      <span>Otros:</span>
+                      <input type="text" class="otros-input" placeholder="Especifique..." disabled />
+                    </label>
+                  }
+                  @if (esMultiple() && maxSelecciones != null) {
+                    <span class="validacion-hint">Selecciona hasta {{ maxSelecciones }} opció{{ maxSelecciones === 1 ? 'n' : 'nes' }}</span>
+                  }
+                </div>
+              }
+            }
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="cerrarModal()">Cancelar</button>
+          <button type="submit" class="btn-primary">{{ editando ? 'Actualizar' : 'Agregar pregunta' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

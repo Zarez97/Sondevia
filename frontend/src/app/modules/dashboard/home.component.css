@@ -1,0 +1,107 @@
+.home {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ── Hero de bienvenida (sección rectangular a todo el ancho) ── */
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 32px;
+  background: linear-gradient(135deg, #ebedf2 0%, #e4e7ee 100%);
+  border-bottom: 1px solid #dde1e8;
+}
+
+/* Contenido bajo el hero */
+.home-body { padding: 32px; }
+.hero-content { position: relative; z-index: 2; }
+.hero-fecha {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  margin-bottom: 8px;
+}
+.hero-saludo {
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+  color: #111827;
+}
+.hero-nombre { color: var(--brand-primary); }
+.hero-sub {
+  font-size: 0.95rem;
+  color: #6b7280;
+}
+.hero-marca {
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 200px;
+  opacity: 0.06;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Accesos directos ───────────────────────────── */
+.seccion-titulo {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 16px;
+}
+
+.accesos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+}
+
+.acceso-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 18px;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.18s, transform 0.18s, border-color 0.18s;
+}
+.acceso-card:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+  border-color: var(--brand-primary-border);
+}
+
+.acceso-icono {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--brand-primary-light);
+  color: var(--brand-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.acceso-icono svg { width: 22px; height: 22px; }
+
+.acceso-nombre {
+  flex: 1;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.acceso-flecha {
+  width: 18px;
+  height: 18px;
+  color: #d1d5db;
+  flex-shrink: 0;
+  transition: color 0.18s, transform 0.18s;
+}
+.acceso-card:hover .acceso-flecha {
+  color: var(--brand-primary);
+  transform: translateX(2px);
+}

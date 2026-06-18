@@ -1,0 +1,35 @@
+<div class="home">
+
+  <!-- Hero de bienvenida (sección a todo el ancho) -->
+  <section class="hero">
+    <div class="hero-content">
+      <p class="hero-fecha">{{ fecha }}</p>
+      <h1 class="hero-saludo">{{ saludo }}, <span class="hero-nombre">{{ user?.nombre }}</span></h1>
+      <p class="hero-sub">Bienvenido al sistema de gestión de encuestas Sondevia.</p>
+    </div>
+    <img class="hero-marca" src="assets/images/logo_sondevia_sidebar.png" alt="" aria-hidden="true" />
+  </section>
+
+  <!-- Contenido -->
+  <div class="home-body">
+    @if (accesos.length) {
+      <h2 class="seccion-titulo">Accesos directos</h2>
+      <div class="accesos-grid">
+        @for (a of accesos; track a.url) {
+          <a class="acceso-card" [routerLink]="a.url">
+            <span class="acceso-icono">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path [attr.d]="getIcono(a.nombre)" />
+              </svg>
+            </span>
+            <span class="acceso-nombre">{{ a.nombre }}</span>
+            <svg class="acceso-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </a>
+        }
+      </div>
+    }
+  </div>
+
+</div>

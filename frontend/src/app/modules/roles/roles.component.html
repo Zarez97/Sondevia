@@ -1,0 +1,172 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Asignar Roles</h2>
+      <p class="page-subtitle">Gestiona los roles del sistema y sus privilegios</p>
+    </div>
+    <div class="header-actions">
+      @if (!cargando && roles.length > 0) {
+        <app-search-bar [(valor)]="busqueda" placeholder="Buscar por nombre o descripción..." />
+      }
+      <button class="btn-primary" (click)="abrirCrear()">+ Nuevo rol</button>
+    </div>
+  </div>
+
+  @if (exito) { <div class="alert alert-success">{{ exito }}</div> }
+  @if (error && !mostrarModalRol && !mostrarModalPrivilegios && !mostrarModalUsuario) {
+    <div class="alert alert-error">{{ error }}</div>
+  }
+
+  <div class="card">
+    @if (cargando) {
+      <div class="empty-state">Cargando roles...</div>
+    } @else if (rolesFiltrados.length === 0) {
+      <div class="empty-state">
+        {{ busqueda ? 'No se encontraron resultados para “' + busqueda + '”.' : 'No hay roles registrados.' }}
+      </div>
+    } @else {
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Privilegios</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (rol of rolesFiltrados; track rol.idRol) {
+            <tr>
+              <td>{{ rol.idRol }}</td>
+              <td><span class="badge-rol">{{ rol.nombreRol }}</span></td>
+              <td>{{ rol.descripcionRol }}</td>
+              <td>
+                @for (p of rol.privilegios; track p.idPrivilegio) {
+                  <span class="badge-priv">{{ p.nombrePrivilegio }}</span>
+                }
+                @if (rol.privilegios.length === 0) {
+                  <span class="text-muted">Sin privilegios</span>
+                }
+              </td>
+              <td class="acciones">
+                <button class="btn-icon" title="Editar" (click)="abrirEditar(rol)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
+                  </svg>
+                </button>
+                <button class="btn-icon" title="Gestionar privilegios" (click)="abrirPrivilegios(rol)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+                  </svg>
+                </button>
+                <button class="btn-icon" title="Asignar a usuario" (click)="abrirAsignarUsuario(rol)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
+                  </svg>
+                </button>
+                <button class="btn-icon danger" title="Eliminar" (click)="eliminarRol(rol.idRol)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                  </svg>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>
+
+<!-- Modal Rol -->
+@if (mostrarModalRol) {
+  <div class="modal-overlay" (click)="mostrarModalRol = false">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ modoEdicion ? 'Editar rol' : 'Nuevo rol' }}</h3>
+        <button class="btn-close" (click)="mostrarModalRol = false">✕</button>
+      </div>
+      <form [formGroup]="formRol" (ngSubmit)="guardarRol()" class="modal-form">
+        <div class="field-group">
+          <label>Nombre del rol</label>
+          <input type="text" formControlName="nombreRol" placeholder="Ej. SUPERVISOR" />
+        </div>
+        <div class="field-group">
+          <label>Descripción</label>
+          <input type="text" formControlName="descripcionRol" placeholder="Descripción del rol" />
+        </div>
+        @if (error) { <div class="alert alert-error">{{ error }}</div> }
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="mostrarModalRol = false">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="guardando">
+            {{ guardando ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Modal Privilegios -->
+@if (mostrarModalPrivilegios && rolSeleccionado) {
+  <div class="modal-overlay" (click)="mostrarModalPrivilegios = false">
+    <div class="modal modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Privilegios — {{ rolSeleccionado.nombreRol }}</h3>
+        <button class="btn-close" (click)="mostrarModalPrivilegios = false">✕</button>
+      </div>
+      <div class="modal-form">
+        <p class="hint">Selecciona los privilegios que tendrá este rol:</p>
+        <div class="privilegios-grid">
+          @for (p of privilegios; track p.idPrivilegio) {
+            <label class="priv-item" [class.selected]="tienePrivilegio(p.idPrivilegio)">
+              <input type="checkbox" [checked]="tienePrivilegio(p.idPrivilegio)"
+                     (change)="togglePrivilegio(p.idPrivilegio)" />
+              <div>
+                <span class="priv-nombre">{{ p.nombrePrivilegio }}</span>
+                <span class="priv-url">{{ p.urlPrivilegio }}</span>
+              </div>
+            </label>
+          }
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="mostrarModalPrivilegios = false">Cancelar</button>
+          <button type="button" class="btn-primary" (click)="guardarPrivilegios()" [disabled]="guardando">
+            {{ guardando ? 'Guardando...' : 'Guardar cambios' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Asignar a Usuario -->
+@if (mostrarModalUsuario && rolSeleccionado) {
+  <div class="modal-overlay" (click)="mostrarModalUsuario = false">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Asignar rol — {{ rolSeleccionado.nombreRol }}</h3>
+        <button class="btn-close" (click)="mostrarModalUsuario = false">✕</button>
+      </div>
+      <div class="modal-form">
+        <div class="field-group">
+          <label>Seleccionar usuario</label>
+          <select [(ngModel)]="usuarioRolId" [ngModelOptions]="{standalone: true}">
+            <option [value]="null" disabled>-- Selecciona un usuario --</option>
+            @for (u of usuarios; track u.idUser) {
+              <option [value]="u.idUser">{{ u.nombreUser }} ({{ u.emailUser }})</option>
+            }
+          </select>
+        </div>
+        @if (error) { <div class="alert alert-error">{{ error }}</div> }
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" (click)="mostrarModalUsuario = false">Cancelar</button>
+          <button type="button" class="btn-primary" (click)="asignarRolAUsuario()" [disabled]="!usuarioRolId || guardando">
+            {{ guardando ? 'Asignando...' : 'Asignar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,265 @@
+<div class="responder-page">
+  <div class="responder-card">
+
+    <!-- Encabezado de marca -->
+    <div class="responder-brand">
+      <img src="assets/images/logo_sondevia_sidebar.png" alt="Sondevia" class="responder-logo" />
+    </div>
+
+    @if (paso === 'cargando') {
+      <div class="estado-centro">
+        <span class="spinner-grande"></span>
+        <p>Cargando encuesta...</p>
+      </div>
+    }
+
+    @if (paso === 'error') {
+      <div class="estado-centro">
+        <div class="icono-error">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <h2>Encuesta no disponible</h2>
+        <p class="estado-msg">{{ errorCarga }}</p>
+      </div>
+    }
+
+    @if (paso === 'auth' && encuesta) {
+      <!-- Bienvenida + acceso (el encuestado debe identificarse con su cuenta) -->
+      <div class="responder-header">
+        <h1 class="responder-titulo">{{ encuesta.tituloEncuesta }}</h1>
+        @if (encuesta.objetivoEncuesta) {
+          <p class="responder-objetivo">{{ encuesta.objetivoEncuesta }}</p>
+        }
+      </div>
+
+      @if (encuesta.instruccionesEncuesta) {
+        <div class="instrucciones-box">
+          <span class="instrucciones-label">Instrucciones</span>
+          <p>{{ encuesta.instruccionesEncuesta }}</p>
+        </div>
+      }
+
+      <div class="responder-meta">
+        @if (encuesta.grupoMeta) {
+          <span class="meta-chip">Dirigida a: {{ encuesta.grupoMeta }}</span>
+        }
+        <span class="meta-chip">{{ encuesta.totalPreguntas }} pregunta{{ encuesta.totalPreguntas !== 1 ? 's' : '' }}</span>
+        <span class="meta-chip">Cierra: {{ encuesta.fechaCierre | date:'dd/MM/yyyy' }}</span>
+      </div>
+
+      <div class="auth-cta">
+        <p class="auth-cta-texto">Para responder esta encuesta necesitas una cuenta. Inicia sesión o regístrate; al terminar podrás ver tus respuestas en tu panel.</p>
+        <div class="auth-cta-botones">
+          <a class="btn-comenzar" [routerLink]="['/login']" [queryParams]="redirectParams">Iniciar sesión</a>
+          <a class="btn-comenzar-sec" [routerLink]="['/registro']" [queryParams]="redirectParams">Crear cuenta</a>
+        </div>
+      </div>
+    }
+
+    @if (paso === 'yaRespondido' && encuesta) {
+      <!-- El encuestado ya respondió esta encuesta -->
+      <div class="estado-centro">
+        <div class="icono-ok">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M20 6 9 17l-5-5"/>
+          </svg>
+        </div>
+        <h2>Ya respondiste esta encuesta</h2>
+        <p class="estado-msg">«{{ encuesta.tituloEncuesta }}» ya tiene tu respuesta registrada. No puedes responderla de nuevo.</p>
+        <button type="button" class="btn-comenzar" (click)="irAlInicio()">Ir al inicio</button>
+      </div>
+    }
+
+    @if (paso === 'preguntas' && preguntaActual) {
+      <!-- Cuestionario navegable (CU12) -->
+      <div class="progreso-wrap">
+        <div class="progreso-info">
+          <span>Pregunta {{ indiceActual + 1 }} de {{ preguntas.length }}</span>
+          <span>{{ progreso }}%</span>
+        </div>
+        <div class="progreso-barra"><div class="progreso-fill" [style.width.%]="progreso"></div></div>
+      </div>
+
+      @if (preguntaActual; as p) {
+        <div class="pregunta-bloque">
+          <h2 class="pregunta-enunciado">
+            {{ p.descripcionPregunta }}
+            @if (p.obligatoriaPregunta) { <span class="required">*</span> }
+          </h2>
+
+          <!-- ABIERTA -->
+          @if (esAbierta(p)) {
+            <textarea class="abierta-input" rows="4" placeholder="Escribe tu respuesta..."
+              [attr.maxlength]="p.maxCaracteres" [value]="resp(p).texto"
+              (input)="setTexto(p, $any($event.target).value)"></textarea>
+            @if (p.minCaracteres != null || p.maxCaracteres != null) {
+              <span class="char-counter">
+                {{ resp(p).texto.trim().length }}{{ p.maxCaracteres ? ' / ' + p.maxCaracteres : '' }} caracteres
+                @if (p.minCaracteres) { · mínimo {{ p.minCaracteres }} }
+              </span>
+            }
+          }
+
+          <!-- ESCALA NUMÉRICA -->
+          @if (esEscala(p)) {
+            <div class="escala-botones">
+              @for (v of escalaValores(p); track v) {
+                <button type="button" class="escala-btn" [class.activa]="resp(p).valor === v"
+                  (click)="setEscala(p, v)">{{ v }}</button>
+              }
+            </div>
+          }
+
+          <!-- RANKING -->
+          @if (esRanking(p)) {
+            <p class="ranking-ayuda">Ordena de mayor a menor importancia con las flechas:</p>
+            <div class="ranking-lista">
+              @for (id of resp(p).ranking; track id; let i = $index) {
+                <div class="ranking-fila">
+                  <span class="ranking-pos">{{ i + 1 }}</span>
+                  <span class="ranking-texto">{{ opcionPorId(p, id)?.textoOpcion }}</span>
+                  <div class="ranking-controles">
+                    <button type="button" (click)="subir(p, i)" [disabled]="i === 0" title="Subir">▲</button>
+                    <button type="button" (click)="bajar(p, i)" [disabled]="i === resp(p).ranking.length - 1" title="Bajar">▼</button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- SELECCIÓN ÚNICA / LIKERT / NOMINAL -->
+          @if (esUnica(p)) {
+            <div class="opciones-lista" [class.likert]="esLikert(p)">
+              @for (o of p.opciones; track o.idOpcionRespuesta) {
+                <label class="opcion-item" [class.activa]="resp(p).idOpcion === o.idOpcionRespuesta">
+                  <input type="radio" [name]="'p' + p.idPregunta"
+                    [checked]="resp(p).idOpcion === o.idOpcionRespuesta"
+                    (change)="setUnica(p, o.idOpcionRespuesta)" />
+                  <span>{{ o.esMixta ? 'Otros' : o.textoOpcion }}</span>
+                </label>
+                @if (o.esMixta && resp(p).idOpcion === o.idOpcionRespuesta) {
+                  <input type="text" class="otros-texto" placeholder="Especifica tu respuesta"
+                    [value]="resp(p).otrosTexto" (input)="setOtros(p, $any($event.target).value)" />
+                }
+              }
+            </div>
+          }
+
+          <!-- SELECCIÓN MÚLTIPLE -->
+          @if (esMultiple(p)) {
+            <div class="opciones-lista">
+              @for (o of p.opciones; track o.idOpcionRespuesta) {
+                <label class="opcion-item" [class.activa]="estaMarcada(p, o.idOpcionRespuesta)">
+                  <input type="checkbox" [checked]="estaMarcada(p, o.idOpcionRespuesta)"
+                    (change)="toggleMultiple(p, o.idOpcionRespuesta)" />
+                  <span>{{ o.esMixta ? 'Otros' : o.textoOpcion }}</span>
+                </label>
+                @if (o.esMixta && estaMarcada(p, o.idOpcionRespuesta)) {
+                  <input type="text" class="otros-texto" placeholder="Especifica tu respuesta"
+                    [value]="resp(p).otrosTexto" (input)="setOtros(p, $any($event.target).value)" />
+                }
+              }
+            </div>
+            @if (p.maxSelecciones != null) {
+              <span class="char-counter">Puedes elegir hasta {{ p.maxSelecciones }} opción{{ p.maxSelecciones === 1 ? '' : 'es' }}</span>
+            }
+          }
+
+          @if (errorPregunta) { <div class="alert-error">{{ errorPregunta }}</div> }
+        </div>
+      }
+
+      <div class="nav-botones">
+        <button type="button" class="btn-nav-sec" (click)="anterior()" [disabled]="indiceActual === 0">
+          ← Anterior
+        </button>
+        <button type="button" class="btn-nav-pri" (click)="siguiente()">
+          {{ esUltima ? 'Revisar respuestas' : 'Siguiente →' }}
+        </button>
+      </div>
+
+      <div class="terminar-tarde-wrap">
+        <button type="button" class="btn-terminar-tarde" (click)="terminarMasTarde()" [disabled]="guardandoBorrador">
+          @if (guardandoBorrador) { Guardando progreso... }
+          @else { Terminar más tarde }
+        </button>
+      </div>
+    }
+
+    @if (paso === 'resumen') {
+      <!-- Resumen antes del envío (CU12 → CU13) -->
+      <div class="responder-header">
+        <h1 class="responder-titulo">Revisa tus respuestas</h1>
+        <p class="responder-objetivo">Confirma que todo esté correcto antes de enviar.</p>
+      </div>
+
+      @if (errorForm) { <div class="alert-error">{{ errorForm }}</div> }
+
+      <div class="resumen-lista">
+        @for (p of preguntas; track p.idPregunta; let i = $index) {
+          <div class="resumen-item">
+            <div class="resumen-cab">
+              <span class="resumen-num">{{ i + 1 }}</span>
+              <p class="resumen-preg">{{ p.descripcionPregunta }}</p>
+              <button type="button" class="btn-editar-resp" (click)="irAPregunta(i)">Editar</button>
+            </div>
+            <p class="resumen-resp">{{ resumenRespuesta(p) }}</p>
+          </div>
+        }
+      </div>
+
+      <div class="nav-botones">
+        <button type="button" class="btn-nav-sec" (click)="anterior()">← Volver</button>
+        <button type="button" class="btn-nav-pri" (click)="enviar()" [disabled]="enviando">
+          @if (enviando) { <span class="spinner"></span> Enviando... }
+          @else { Enviar respuestas }
+        </button>
+      </div>
+
+      <div class="terminar-tarde-wrap">
+        <button type="button" class="btn-terminar-tarde" (click)="terminarMasTarde()" [disabled]="guardandoBorrador">
+          @if (guardandoBorrador) { Guardando progreso... }
+          @else { Terminar más tarde }
+        </button>
+      </div>
+    }
+
+    @if (paso === 'fin') {
+      <!-- Agradecimiento + número de registro (CU13) -->
+      <div class="estado-centro">
+        <div class="icono-ok">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M20 6 9 17l-5-5"/>
+          </svg>
+        </div>
+        <h2>¡Gracias por participar{{ nombreUsuario ? ', ' + nombreUsuario : '' }}!</h2>
+        <p class="estado-msg">Tus respuestas se registraron correctamente.</p>
+        @if (confirmacion) {
+          <div class="registro-box">
+            <span class="registro-label">Número de registro</span>
+            <span class="registro-num">#{{ confirmacion.numeroRegistro }}</span>
+            <span class="registro-fecha">{{ confirmacion.fechaRespuesta | date:'dd/MM/yyyy' }}</span>
+          </div>
+        }
+        <button type="button" class="btn-comenzar" (click)="irAlInicio()">Ir al inicio</button>
+      </div>
+    }
+
+  </div>
+</div>
+
+<!-- Confirmación de envío (CU13) -->
+@if (confirmando) {
+  <div class="confirm-overlay" (click)="cancelarEnvio()">
+    <div class="confirm-dialog" (click)="$event.stopPropagation()">
+      <h3>¿Enviar tus respuestas?</h3>
+      <p>Una vez enviadas no podrás modificarlas. ¿Deseas continuar?</p>
+      <div class="confirm-acciones">
+        <button type="button" class="btn-nav-sec" (click)="cancelarEnvio()">Cancelar</button>
+        <button type="button" class="btn-nav-pri" (click)="confirmarEnvio()">Sí, enviar</button>
+      </div>
+    </div>
+  </div>
+}
