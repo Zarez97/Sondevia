@@ -89,6 +89,17 @@ public class EncuestaController {
         }
     }
 
+    @PostMapping("/{id}/cerrar")
+    public ResponseEntity<?> cerrar(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(encuestaService.cerrar(id));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("mensaje", e.getMessage()));
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminar(@PathVariable Integer id) {
         try {

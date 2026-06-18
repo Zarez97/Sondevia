@@ -47,8 +47,7 @@ public class ResultadoService {
         dto.setTituloEncuesta(encuesta.getTituloEncuesta());
         dto.setEstadoEncuesta(encuesta.getEstadoEncuesta());
         dto.setEstadoNombre(nombreEstado(encuesta.getEstadoEncuesta()));
-        dto.setTotalRespuestas(respuestaRepository.countByEncuestaIdEncuestaAndEstadoRespuesta(
-                idEncuesta, EstadoRespuesta.ENVIADA));
+        dto.setTotalRespuestas(respuestaRepository.totalRespuestasEnviadas(idEncuesta));
 
         long maxGlobal = 0;
         String masSeleccionada = null;
@@ -100,7 +99,7 @@ public class ResultadoService {
                 opcionRespuestaRepository.findByPreguntaIdPreguntaOrderByValorNumericoAsc(p.getIdPregunta());
         TipoPreguntaCerrada tc = p.getTipoPreguntaCerrada();
 
-        // ESCALA: distribución de valores del rango
+        // ESCALA: distribución de valores del rango + promedio (función SQL)
         if (tc == TipoPreguntaCerrada.ESCALA && opciones.size() >= 2) {
             int min = parseEntero(opciones.get(0).getTextoOpcion(), 1);
             int max = parseEntero(opciones.get(1).getTextoOpcion(), 5);
@@ -112,6 +111,7 @@ public class ResultadoService {
             long total = conteo.values().stream().mapToLong(Long::longValue).sum();
             conteo.forEach((v, c) ->
                     rp.getOpciones().add(new ConteoOpcionDTO(String.valueOf(v), c, porcentaje(c, total))));
+            rp.setPromedio(detalleRespuestaRepository.promedioEscalaPregunta(p.getIdPregunta()));
             return rp;
         }
 
@@ -136,21 +136,14 @@ public class ResultadoService {
             return rp;
         }
 
-        // ÚNICA / MÚLTIPLE / LIKERT / NOMINAL: conteo por opción
-        Map<Integer, Long> conteo = new LinkedHashMap<>();
-        Map<Integer, String> etiqueta = new LinkedHashMap<>();
-        for (OpcionRespuesta o : opciones) {
-            conteo.put(o.getIdOpcionRespuesta(), 0L);
-            etiqueta.put(o.getIdOpcionRespuesta(), Boolean.TRUE.equals(o.getEsMixta()) ? "Otros" : o.getTextoOpcion());
+        // ÚNICA / MÚLTIPLE / LIKERT / NOMINAL: conteo por opción (función SQL)
+        for (Object[] fila : detalleRespuestaRepository.conteoOpcionesPorPregunta(p.getIdPregunta())) {
+            rp.getOpciones().add(new ConteoOpcionDTO(
+                (String)  fila[0],
+                ((Number) fila[1]).longValue(),
+                ((Number) fila[2]).doubleValue()
+            ));
         }
-        for (DetalleRespuesta d : detalles) {
-            if (d.getOpcionRespuesta() != null) {
-                conteo.merge(d.getOpcionRespuesta().getIdOpcionRespuesta(), 1L, Long::sum);
-            }
-        }
-        long total = conteo.values().stream().mapToLong(Long::longValue).sum();
-        conteo.forEach((id, c) ->
-                rp.getOpciones().add(new ConteoOpcionDTO(etiqueta.get(id), c, porcentaje(c, total))));
         return rp;
     }
 

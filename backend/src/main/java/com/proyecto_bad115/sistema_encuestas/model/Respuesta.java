@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
 import java.time.LocalDate;
 
@@ -26,7 +28,8 @@ public class Respuesta {
     @Column(name = "estado_respuesta")
     private Integer estadoRespuesta;
 
-    @Column(name = "fecha_actualizacion")
+    @Generated(event = {EventType.INSERT, EventType.UPDATE})
+    @Column(name = "fecha_actualizacion", insertable = false, updatable = false)
     private LocalDate fechaActualizacion;
 
     @ManyToOne
