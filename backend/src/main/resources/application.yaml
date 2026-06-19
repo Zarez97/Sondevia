@@ -16,16 +16,16 @@ spring:
       fail-on-empty-beans: false
 
   mail:
-  host: smtp.gmail.com
-  port: 587
-  username: notificaciones.sondevia@gmail.com
-  password: ${GMAIL_PASSWORD} 
-  properties:
-    mail:
-      smtp:
-        auth: true
-        starttls:
-          enable: true
+    host: smtp.gmail.com
+    port: 587
+    username: notificaciones.sondevia@gmail.com
+    password: ${GMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
   server:
     port: 8080
