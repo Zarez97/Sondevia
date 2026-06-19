@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
 export interface PrivilegioResponseDTO {
   idPrivilegio: number;
@@ -18,7 +19,7 @@ export interface PrivilegioRequest {
 
 @Injectable({ providedIn: 'root' })
 export class PrivilegioService {
-  private readonly API = 'http://localhost:8080/privilegios';
+  private readonly API = `${environment.apiUrl}/privilegios`;
 
   constructor(private http: HttpClient, private auth: AuthService) {}
 

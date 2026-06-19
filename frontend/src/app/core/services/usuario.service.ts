@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
 export interface Usuario {
   idUser: number;
@@ -27,7 +28,7 @@ export interface ActualizarUsuario {
 
 @Injectable({ providedIn: 'root' })
 export class UsuarioService {
-  private readonly API = 'http://localhost:8080/usuarios';
+  private readonly API = `${environment.apiUrl}/usuarios`;
 
   constructor(private http: HttpClient, private auth: AuthService) {}
 

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
 export interface MenuItem {
   nombre: string;
@@ -10,7 +11,7 @@ export interface MenuItem {
 
 @Injectable({ providedIn: 'root' })
 export class MenuService {
-  private readonly API = 'http://localhost:8080/auth/menu';
+  private readonly API = `${environment.apiUrl}/auth/menu`;
 
   constructor(private http: HttpClient, private auth: AuthService) {}
 

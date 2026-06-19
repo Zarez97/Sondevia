@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface ConteoOpcion {
   etiqueta: string;
@@ -32,7 +33,7 @@ export interface Resultados {
 
 @Injectable({ providedIn: 'root' })
 export class ResultadoService {
-  private api = 'http://localhost:8080/encuestas';
+  private api = `${environment.apiUrl}/encuestas`;
 
   constructor(private http: HttpClient) {}
 

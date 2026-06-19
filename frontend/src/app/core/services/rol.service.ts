@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
 import { PrivilegioResponseDTO } from './privilegio.service';
+import { environment } from '../../../environments/environment';
 
 export interface RolResponse {
   idRol: number;
@@ -18,7 +19,7 @@ export interface RolRequest {
 
 @Injectable({ providedIn: 'root' })
 export class RolService {
-  private readonly API = 'http://localhost:8080/roles';
+  private readonly API = `${environment.apiUrl}/roles`;
 
   constructor(private http: HttpClient, private auth: AuthService) {}
 

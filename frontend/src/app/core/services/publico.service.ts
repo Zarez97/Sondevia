@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Pregunta } from './pregunta.service';
+import { environment } from '../../../environments/environment';
 
 export interface EncuestaPublica {
   idEncuesta: number;
@@ -57,10 +58,10 @@ export interface EncuestaDisponible {
 
 @Injectable({ providedIn: 'root' })
 export class PublicoService {
-  private api = 'http://localhost:8080/publico';
-  private responderApi = 'http://localhost:8080/responder';
-  private misEncuestasApi = 'http://localhost:8080/mis-encuestas';
-  private disponiblesApi = 'http://localhost:8080/encuestas-disponibles';
+  private api = `${environment.apiUrl}/publico`;
+  private responderApi = `${environment.apiUrl}/responder`;
+  private misEncuestasApi = `${environment.apiUrl}/mis-encuestas`;
+  private disponiblesApi = `${environment.apiUrl}/encuestas-disponibles`;
 
   constructor(private http: HttpClient) {}
 

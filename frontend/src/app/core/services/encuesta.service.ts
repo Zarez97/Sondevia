@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface Encuesta {
   idEncuesta: number;
@@ -27,7 +28,7 @@ export interface EncuestaRequest {
 
 @Injectable({ providedIn: 'root' })
 export class EncuestaService {
-  private api = 'http://localhost:8080/encuestas';
+  private api = `${environment.apiUrl}/encuestas`;
 
   constructor(private http: HttpClient) {}
 
