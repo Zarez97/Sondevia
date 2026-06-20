@@ -3,45 +3,59 @@ package com.proyecto_bad115.sistema_encuestas.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
 
+// Railway bloquea las conexiones salientes SMTP (puertos 587/465), por lo que
+// los correos se envían vía la API HTTP de Resend en lugar de JavaMailSender.
 @Service
 public class EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
     private static final DateTimeFormatter FECHA_HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private static final String RESEND_URL = "https://api.resend.com/emails";
 
-    private final JavaMailSender mailSender;
+    private final RestClient restClient;
 
-    // El remitente siempre coincide con la cuenta autenticada en application.yaml
-    @Value("${spring.mail.username}")
+    @Value("${resend.from}")
     private String remitente;
 
-    public EmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
+    public EmailService(@Value("${resend.api-key}") String apiKey) {
+        this.restClient = RestClient.builder()
+                .baseUrl(RESEND_URL)
+                .defaultHeader("Authorization", "Bearer " + apiKey)
+                .build();
+    }
+
+    private void enviar(String destinatario, String asunto, String texto, String replyTo) {
+        restClient.post()
+                .body(Map.of(
+                        "from", remitente,
+                        "to", List.of(destinatario),
+                        "subject", asunto,
+                        "text", texto,
+                        "reply_to", replyTo == null ? List.of() : List.of(replyTo)
+                ))
+                .retrieve()
+                .toBodilessEntity();
     }
 
     @Async
     public void enviarDesbloqueo(String destinatario, String nombreUsuario) {
         try {
-            SimpleMailMessage mensaje = new SimpleMailMessage();
-            mensaje.setFrom(remitente);
-            mensaje.setTo(destinatario);
-            mensaje.setSubject("Sondevia - Cuenta desbloqueada");
-            mensaje.setText(
+            enviar(destinatario, "Sondevia - Cuenta desbloqueada",
                 "Hola " + nombreUsuario + ",\n\n" +
                 "Tu cuenta en Sondevia ha sido desbloqueada por el administrador del sistema.\n" +
                 "Ya puedes iniciar sesion con tus credenciales.\n\n" +
                 "Si no solicitaste este desbloqueo, contacta al administrador.\n\n" +
-                "Equipo Sondevia"
-            );
-            mailSender.send(mensaje);
+                "Equipo Sondevia",
+                null);
         } catch (Exception e) {
             log.warn("No se pudo enviar el correo de desbloqueo a {}: {}", destinatario, e.getMessage());
         }
@@ -51,12 +65,7 @@ public class EmailService {
     @Async
     public void enviarSolicitudDesbloqueo(String emailUsuario, String nombreUsuario) {
         try {
-            SimpleMailMessage mensaje = new SimpleMailMessage();
-            mensaje.setFrom(remitente);
-            mensaje.setTo(remitente); // buzón del administrador (notificaciones.sondevia@gmail.com)
-            mensaje.setReplyTo(emailUsuario);
-            mensaje.setSubject("Sondevia - Solicitud de desbloqueo de cuenta");
-            mensaje.setText(
+            enviar(remitente, "Sondevia - Solicitud de desbloqueo de cuenta",
                 "Hola administrador,\n\n" +
                 "Un usuario ha solicitado el desbloqueo de su cuenta en Sondevia:\n\n" +
                 "  Nombre: " + nombreUsuario + "\n" +
@@ -65,9 +74,8 @@ public class EmailService {
                 "La cuenta fue bloqueada por multiples intentos fallidos de inicio de sesion.\n" +
                 "Verifica la identidad del usuario y desbloquea la cuenta desde el panel de\n" +
                 "administracion (Usuarios bloqueados) si corresponde.\n\n" +
-                "Equipo Sondevia"
-            );
-            mailSender.send(mensaje);
+                "Equipo Sondevia",
+                emailUsuario);
         } catch (Exception e) {
             log.warn("No se pudo enviar la solicitud de desbloqueo de {}: {}", emailUsuario, e.getMessage());
         }
@@ -76,20 +84,15 @@ public class EmailService {
     @Async
     public void enviarBienvenida(String destinatario, String nombreUsuario, String contraseniaTemporal) {
         try {
-            SimpleMailMessage mensaje = new SimpleMailMessage();
-            mensaje.setFrom(remitente);
-            mensaje.setTo(destinatario);
-            mensaje.setSubject("Sondevia - Bienvenido al sistema");
-            mensaje.setText(
+            enviar(destinatario, "Sondevia - Bienvenido al sistema",
                 "Hola " + nombreUsuario + ",\n\n" +
                 "Tu cuenta en Sondevia ha sido creada exitosamente.\n" +
                 "Tus credenciales de acceso son:\n" +
                 "  Correo: " + destinatario + "\n" +
                 "  Contraseña temporal: " + contraseniaTemporal + "\n\n" +
                 "Por favor cambia tu contraseña al iniciar sesion por primera vez.\n\n" +
-                "Equipo Sondevia"
-            );
-            mailSender.send(mensaje);
+                "Equipo Sondevia",
+                null);
         } catch (Exception e) {
             log.warn("No se pudo enviar el correo de bienvenida a {}: {}", destinatario, e.getMessage());
         }
