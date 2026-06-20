@@ -17,15 +17,19 @@ spring:
 
   mail:
     host: smtp.gmail.com
-    port: 587
+    port: 465
     username: notificaciones.sondevia@gmail.com
     password: ${GMAIL_PASSWORD}
     properties:
       mail:
         smtp:
           auth: true
-          starttls:
+          ssl:
             enable: true
+          socketFactory:
+            port: 465
+            class: javax.net.ssl.SSLSocketFactory
+            fallback: false
 
   server:
     port: 8080
