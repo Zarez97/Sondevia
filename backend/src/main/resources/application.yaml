@@ -22,6 +22,6 @@ jwt:
   secret: ${JWT_SECRET}
   expiration: 86400000
 
-resend:
-  api-key: ${RESEND_API_KEY}
-  from: ${RESEND_FROM:onboarding@resend.dev}
+brevo:
+  api-key: ${BREVO_API_KEY}
+  from: ${BREVO_FROM:notificaciones.sondevia@gmail.com}

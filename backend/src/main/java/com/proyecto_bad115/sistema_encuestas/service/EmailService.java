@@ -13,35 +13,43 @@ import java.util.List;
 import java.util.Map;
 
 // Railway bloquea las conexiones salientes SMTP (puertos 587/465), por lo que
-// los correos se envían vía la API HTTP de Resend en lugar de JavaMailSender.
+// los correos se envían vía la API HTTP de Brevo en lugar de JavaMailSender.
+// Brevo solo exige verificar la dirección de remitente (no un dominio completo),
+// por lo que se puede seguir usando notificaciones.sondevia@gmail.com.
 @Service
 public class EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
     private static final DateTimeFormatter FECHA_HORA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-    private static final String RESEND_URL = "https://api.resend.com/emails";
+    private static final String BREVO_URL = "https://api.brevo.com/v3/smtp/email";
 
     private final RestClient restClient;
 
-    @Value("${resend.from}")
+    @Value("${brevo.from}")
     private String remitente;
 
-    public EmailService(@Value("${resend.api-key}") String apiKey) {
+    public EmailService(@Value("${brevo.api-key}") String apiKey) {
         this.restClient = RestClient.builder()
-                .baseUrl(RESEND_URL)
-                .defaultHeader("Authorization", "Bearer " + apiKey)
+                .baseUrl(BREVO_URL)
+                .defaultHeader("api-key", apiKey)
+                .defaultHeader("Content-Type", "application/json")
+                .defaultHeader("Accept", "application/json")
                 .build();
     }
 
     private void enviar(String destinatario, String asunto, String texto, String replyTo) {
+        Map<String, Object> body = new java.util.HashMap<>(Map.of(
+                "sender", Map.of("email", remitente, "name", "Sondevia"),
+                "to", List.of(Map.of("email", destinatario)),
+                "subject", asunto,
+                "textContent", texto
+        ));
+        if (replyTo != null) {
+            body.put("replyTo", Map.of("email", replyTo));
+        }
+
         restClient.post()
-                .body(Map.of(
-                        "from", remitente,
-                        "to", List.of(destinatario),
-                        "subject", asunto,
-                        "text", texto,
-                        "reply_to", replyTo == null ? List.of() : List.of(replyTo)
-                ))
+                .body(body)
                 .retrieve()
                 .toBodilessEntity();
     }
