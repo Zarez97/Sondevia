@@ -98,7 +98,7 @@ public class EmailService {
                 "Tus credenciales de acceso son:\n" +
                 "  Correo: " + destinatario + "\n" +
                 "  Contraseña temporal: " + contraseniaTemporal + "\n\n" +
-                "Por favor cambia tu contraseña al iniciar sesion por primera vez.\n\n" +
+                "Inicia sesion en el sistema aqui: https://sondevia.up.railway.app/login\n\n" +
                 "Equipo Sondevia",
                 null);
         } catch (Exception e) {
