@@ -166,7 +166,7 @@ export class PreguntasComponent implements OnInit {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
 
     if (this.tipoPrincipal === 'CERRADA') {
-      const validas = this.opciones.filter(o => o.trim() !== '');
+      const validas = this.opciones.filter(o => String(o ?? '').trim() !== '');
       if (validas.length < 2) {
         this.errorModal = 'Debe ingresar al menos 2 opciones.';
         return;
@@ -189,7 +189,7 @@ export class PreguntasComponent implements OnInit {
       }
     }
     if (this.esMultiple() && this.maxSelecciones != null) {
-      const numOpciones = this.opciones.filter(o => o.trim() !== '').length + (this.esMixtaPregunta ? 1 : 0);
+      const numOpciones = this.opciones.filter(o => String(o ?? '').trim() !== '').length + (this.esMixtaPregunta ? 1 : 0);
       if (this.maxSelecciones < 1) {
         this.errorModal = 'El máximo de selecciones debe ser al menos 1.';
         return;
@@ -219,7 +219,7 @@ export class PreguntasComponent implements OnInit {
         tipoPreguntaCerrada: tipoCerradaBackend,
         esMixta: this.puedeSerMixta() && this.esMixtaPregunta,
         maxSelecciones: this.esMultiple() ? this.maxSelecciones : null,
-        opciones: this.opciones.filter(o => o.trim() !== '')
+        opciones: this.opciones.filter(o => String(o ?? '').trim() !== '')
       })
     };
 
