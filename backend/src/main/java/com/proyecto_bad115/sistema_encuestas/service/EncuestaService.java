@@ -98,7 +98,12 @@ public class EncuestaService {
             throw new IllegalStateException(mensajeProcedure(e));
         }
 
-        return toDTO(encuestaRepository.findById(id).orElseThrow());
+        // El procedure nativo actualiza la fila en BD sin que Hibernate lo sepa;
+        // con open-in-view, un findById aquí devolvería la entidad ya cacheada
+        // en el contexto de persistencia de la request (con el token viejo).
+        encuesta.setTokenPublico(token);
+        encuesta.setEstadoEncuesta(EstadoEncuesta.PUBLICADA);
+        return toDTO(encuesta);
     }
 
     /**
